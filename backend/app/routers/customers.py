@@ -1,13 +1,10 @@
 """Customer endpoints (spec 001). Thin: validate, call a service, return a schema."""
 
-from typing import Annotated
+from fastapi import APIRouter, HTTPException
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy.orm import Session
-
-from app.db import get_db
 from app.models import Customer
 from app.repositories import customers as repository
+from app.routers.deps import Body, Db
 from app.schemas.customer import CustomerOut
 from app.services.customer_input import (
     CustomerInputError,
@@ -20,15 +17,6 @@ from app.services.customer_search import search_customers
 NOT_FOUND_MESSAGE = "Cliente no encontrado."
 
 router = APIRouter(prefix="/customers", tags=["customers"])
-
-
-async def read_body(request: Request) -> bytes:
-    """Raw body: the JSON is parsed by hand so FastAPI's own 422 never appears (R13)."""
-    return await request.body()
-
-
-Db = Annotated[Session, Depends(get_db)]
-Body = Annotated[bytes, Depends(read_body)]
 
 
 @router.post("", response_model=CustomerOut, status_code=201)

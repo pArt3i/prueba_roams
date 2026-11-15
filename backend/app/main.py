@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_cors_origins, get_database_url
 from app.db import create_db_engine, create_session_factory, init_db
 from app.errors import register_error_handlers
-from app.routers import customers
+from app.routers import customers, simulations
 
 
 def create_app(
@@ -34,6 +34,7 @@ def create_app(
     )
     register_error_handlers(app)
     app.include_router(customers.router)
+    app.include_router(simulations.router)
     return app
 
 

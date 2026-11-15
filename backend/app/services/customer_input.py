@@ -98,7 +98,8 @@ def _email(payload: Mapping[str, object]) -> str:
         raise CustomerInputError(EMAIL_INVALID) from exc
 
 
-def _country(payload: Mapping[str, object]) -> str:
+def parse_country(payload: Mapping[str, object]) -> str:
+    """The country code in upper case, or `CustomerInputError` (spec 001 R1, spec 002 R4)."""
     raw = _text(payload, "country")
     if not raw:
         raise CustomerInputError(COUNTRY_REQUIRED)
@@ -131,7 +132,7 @@ def validate_customer(payload: Mapping[str, object]) -> CustomerData:
     """Validate in the order of R15; unknown fields are ignored (R17)."""
     name = _name(payload)
     email = _email(payload)
-    country = _country(payload)
+    country = parse_country(payload)
     plan = _plan(payload)
     tax_id = _tax_id(payload, country)
     return CustomerData(name, email, country, plan, tax_id)
