@@ -10,47 +10,16 @@ from app.services.tax_id import (
     normalize_tax_id,
     strip_separators,
 )
+from tests import messages
+from tests.casos_md import CASOS_MD
 from tests.constants import (
-    ARABIC_DIGITS,
     DOTLESS_I,
-    EMPTY_TAX_ID_MESSAGE,
     FI_LIGATURE,
     IDEOGRAPHIC_SPACE,
-    INVALID_TAX_ID_MESSAGE,
     LONG_S,
     NBSP,
     SHARP_S,
 )
-
-# One row per case of validacion-nif/casos.md, in the same order:
-# (identifier, valid, expected normalized value or None when invalid).
-CASOS_MD = [
-    ("12345678Z", True, "12345678Z"),
-    ("00000000T", True, "00000000T"),
-    ("12345678z", True, "12345678Z"),
-    ("12.345.678-Z", True, "12345678Z"),
-    (f"1234{NBSP}5678Z", True, "12345678Z"),
-    ("X1234567L", True, "X1234567L"),
-    ("Y1234567X", True, "Y1234567X"),
-    ("Z1234567R", True, "Z1234567R"),
-    ("A58818501", True, "A58818501"),
-    ("B12345674", True, "B12345674"),
-    ("P2812345C", True, "P2812345C"),
-    ("C12345674", True, "C12345674"),
-    ("C1234567D", True, "C1234567D"),
-    ("12345678A", False, None),
-    ("1234567Z", False, None),
-    ("123456789", False, None),
-    ("X1234567A", False, None),
-    ("B12345675", False, None),
-    ("B1234567D", False, None),
-    ("P28123453", False, None),
-    ("I12345674", False, None),
-    ("ABCDEFGHI", False, None),
-    (f"{ARABIC_DIGITS}Z", False, None),
-    (f"P1111111{DOTLESS_I}", False, None),
-    ("", False, None),
-]
 
 
 @pytest.mark.parametrize(
@@ -120,7 +89,7 @@ def test_ca59_es_rechaza_no_ascii_antes_de_mayusculas(raw: str) -> None:
     assert is_valid_spanish_tax_id(raw.upper())
     with pytest.raises(InvalidTaxIdError) as error:
         normalize_and_validate_tax_id(raw, "ES")
-    assert str(error.value) == INVALID_TAX_ID_MESSAGE
+    assert str(error.value) == messages.TAX_ID_INVALID
     assert not is_valid_spanish_tax_id(raw)
 
 
@@ -173,10 +142,10 @@ def test_pais_no_ascii_que_pasaria_a_es_no_se_trata_como_es() -> None:
 def test_mensajes_en_espanol() -> None:
     with pytest.raises(InvalidTaxIdError) as invalid:
         normalize_and_validate_tax_id("12345678A", "ES")
-    assert str(invalid.value) == INVALID_TAX_ID_MESSAGE
+    assert str(invalid.value) == messages.TAX_ID_INVALID
     with pytest.raises(TaxIdEmptyError) as empty:
         normalize_and_validate_tax_id("", "ES")
-    assert str(empty.value) == EMPTY_TAX_ID_MESSAGE
+    assert str(empty.value) == messages.TAX_ID_REQUIRED
 
 
 def test_ca51_mismo_identificador_normalizado_con_distinto_formato() -> None:

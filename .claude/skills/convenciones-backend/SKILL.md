@@ -11,6 +11,7 @@ description: Convenciones del backend de SaaS-O-Matic (estructura de FastAPI, SQ
 - `app/models/`: modelos SQLAlchemy.
 - `app/schemas/`: modelos Pydantic de entrada y salida.
 - `app/routers/`: un router por recurso (clientes, simulaciones, cálculo).
+- `app/repositories/`: acceso a la base de datos; `services/` no lo toca.
 - `app/services/`: lógica de negocio pura (precios, validación de NIF). Sin FastAPI ni base de datos, para poder probarla sola.
 - `tests/`: un archivo de test por servicio o router, con fixtures en `conftest.py`.
 

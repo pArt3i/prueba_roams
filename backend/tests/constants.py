@@ -23,6 +23,6 @@ N_TILDE_LOWER = chr(0x00F1)
 E_ACUTE_UPPER = chr(0x00C9)
 E_ACUTE_LOWER = chr(0x00E9)
 
-# User-facing messages (spec 001, Errores). The accent is built with chr().
-INVALID_TAX_ID_MESSAGE = "Identificador fiscal no v" + chr(0x00E1) + "lido."
-EMPTY_TAX_ID_MESSAGE = "El identificador fiscal es obligatorio."
+# Control whitespace that `str.isspace()` also treats as a separator.
+TAB = chr(0x0009)
+NEWLINE = chr(0x000A)

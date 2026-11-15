@@ -15,11 +15,11 @@ Supuesto de escala: la búsqueda y el orden se hacen en Python sobre los cliente
 | --- | --- | --- | --- |
 | `name` | string | Sí | Se recorta de espacios en los extremos; no vacío; máximo 120 caracteres |
 | `email` | string | Sí | Se recorta y se pasa a minúsculas; formato válido (`EmailStr` de Pydantic); máximo 254 caracteres |
-| `country` | string | Sí | Ausente o vacío, 422; código de la tabla de `iva.md`; se acepta en minúsculas y se guarda en mayúsculas; otro valor, 422 |
-| `plan` | string | Sí | Ausente o vacío, 422; `starter`, `business` o `enterprise` (ver `reglas-negocio`); otro valor, 422 |
+| `country` | string | Sí | Ausente o vacío, 422; código de la tabla de `iva.md`; se acepta en minúsculas y se guarda en mayúsculas; no se recorta de espacios (R1); otro valor, 422 |
+| `plan` | string | Sí | Ausente o vacío, 422; `starter`, `business` o `enterprise` (ver `reglas-negocio`); no se recorta de espacios (R11); otro valor, 422 |
 | `tax_id` | string | Sí | Se normaliza (R2) y valida según `validacion-nif` (ES) o R4 (resto); se valida el último (R15) |
 
-`GET /customers?q=`: `q` string opcional (R7). `GET /customers/{id}`: `id` entero.
+`GET /customers?q=`: `q` string opcional (R7). `GET /customers/{id}`: `id` entero, con el formato de R8.
 
 ## Salidas
 `POST /customers` devuelve 201 con el cliente (`tax_id`, `email` y `country` van normalizados):
@@ -33,19 +33,19 @@ Supuesto de escala: la búsqueda y el orden se hacen en Python sobre los cliente
 Todos los errores, también los de validación, devuelven `{"detail": "texto en español"}` (R13).
 
 ## Reglas de negocio
-- R1: `country` es obligatorio (ausente o vacío, 422) y debe estar en la tabla de `iva.md`; si no, 422. Se compara sin distinguir mayúsculas y se guarda en mayúsculas (`es` se guarda como `ES`). Un `country` con algún carácter no ASCII (por ejemplo `eſ`, con `ſ` U+017F, o `ıt`, con `ı` U+0131) nunca se convierte en un código de la tabla, aunque en mayúsculas lo pareciera (`eſ` daría `ES` e `ıt` daría `IT`): queda fuera de la tabla y da 422 «País no admitido.».
+- R1: `country` es obligatorio (ausente o vacío, 422) y debe estar en la tabla de `iva.md`; si no, 422. Se compara sin distinguir mayúsculas y se guarda en mayúsculas (`es` se guarda como `ES`). `country` no se recorta de espacios (solo `name` y `email` se recortan): el valor debe ser exactamente un código de la tabla, así que `" ES "` da 422 «País no admitido.»; y como no se recorta, un valor solo de espacios no cuenta como vacío y da también «País no admitido.», no «obligatorio». Un `country` con algún carácter no ASCII (por ejemplo `eſ`, con `ſ` U+017F, o `ıt`, con `ı` U+0131) nunca se convierte en un código de la tabla, aunque en mayúsculas lo pareciera (`eſ` daría `ES` e `ıt` daría `IT`): queda fuera de la tabla y da 422 «País no admitido.».
 - R2: `tax_id` se normaliza siempre antes de validar y se guarda normalizado (`validacion-nif`), sea cual sea el país. Normalizar es quitar los guiones, los puntos y cualquier espacio en blanco Unicode (U+0020, U+00A0, U+3000, tabulador, saltos de línea...; los que Python `str.isspace()` reconoce) y pasar a mayúsculas. En todos los países, entre quitar los separadores y pasar a mayúsculas se aplica la comprobación de no ASCII: para ES, la de R3; para el resto, la de R4.
 - R3: si `country` es ES, `tax_id` debe ser un DNI, NIE o CIF válido según `validacion-nif` y sus casos. Además, si el `tax_id` sin separadores (R2) contiene cualquier carácter no ASCII, es inválido (422 «Identificador fiscal no válido.»); se comprueba antes de pasar a mayúsculas, porque si no `ı` (U+0131) se convertiría en `I` y podría pasar como letra de control de un CIF válido.
 - R4: si `country` no es ES, primero se mira el `tax_id` sin separadores (R2), antes de pasar a mayúsculas: si contiene cualquier carácter no ASCII (`Ñ`, acentos, `ß`, `ı`, `ﬁ`...), 422 «Identificador fiscal no válido.» (así `ß` no se convierte en `SS`). Un espacio en blanco Unicode no cuenta: es separador y ya se quitó (`AB`+U+00A0+`123` queda `AB123`, válido). Después, en mayúsculas, debe tener entre 5 y 20 caracteres y solo A–Z y 0–9; vacío, más corto, más largo o con cualquier otro carácter (símbolos), 422.
 - R5: dos clientes con el mismo `tax_id` normalizado son duplicados, aunque tengan distinto país: 409 y no se crea nada. Solo el `tax_id` genera 409 (no el nombre ni el email). El 409 no incluye el `id` del cliente existente.
 - R6: el orden de comprobación es 422 (formato) y después 409 (duplicado).
 - R7: `GET /customers?q=` recorta `q` de espacios en blanco en los extremos. Sin `q` o con `q` vacío devuelve todos los clientes. Con `q`, devuelve los clientes que cumplan alguna de estas condiciones, con coincidencia parcial: (a) su `name` contiene `q`; (b) su `tax_id` contiene `q` normalizado igual que `tax_id` (R2), pero solo si `q`, sin separadores y antes de pasar a mayúsculas, es ASCII; si tiene algún carácter no ASCII (`ß`, `ñ`, `é`...), no se busca por identificador y solo cuenta (a). En (a) la comparación ignora mayúsculas y tildes (incluida la `ñ`): descomponer en NFD, quitar marcas diacríticas y `casefold`, sin `upper()`. Además, cada serie de espacios en blanco seguidos (U+0020, U+00A0, tabulador...) cuenta como un solo espacio. Todo esto se aplica a `q` y a `name` solo para comparar: el nombre guardado y devuelto no cambia. `jose` encuentra `José`, `nu` encuentra `Núñez` y `acme   sol` encuentra `Acme Soluciones`. Como `casefold` convierte `ß` en `ss`, `q=ß` encuentra por nombre `Strasse`; es aceptable (decisión de Pablo). Se hace en Python sobre los clientes leídos, no con `LIKE` de SQL. Si `q` queda vacío tras quitar separadores, solo se busca por `name`.
-- R8: `GET /customers/{id}` con un id inexistente devuelve 404.
+- R8: `GET /customers/{id}` solo acepta como `id` dígitos ASCII (`0`-`9`) con un signo `-` opcional delante. Con ese formato, el `id` que no corresponde a ningún cliente devuelve 404 «Cliente no encontrado.»: `0`, los negativos y los enteros que no existen, incluidos los mayores de 2^63-1. Con cualquier otro formato (`+1`, decimales como `1.0`, `1_0`, texto no numérico, dígitos que no sean ASCII), 422 «Identificador de cliente no válido.».
 - R9: `name` se recorta de espacios y se guarda recortado; vacío o ausente, 422; más de 120 caracteres (tras recortar), 422.
 - R10: `email` es obligatorio; se recorta y se pasa a minúsculas antes de validar y se guarda así. Se valida con `EmailStr` de Pydantic (dependencia `email-validator`, autorizada por Pablo; ver ADR 001); sin formato válido, 422. Máximo 254 caracteres tras recortar; 255 o más, 422 con el mismo mensaje que el formato inválido. El email no es único: dos clientes pueden compartirlo.
-- R11: `plan` es obligatorio (ausente o vacío, 422) y debe ser exactamente `starter`, `business` o `enterprise`; cualquier otro valor, 422. Es informativo y no cambia el precio (`reglas-negocio`).
+- R11: `plan` es obligatorio (ausente o vacío, 422) y debe ser exactamente `starter`, `business` o `enterprise`; cualquier otro valor, 422. `plan` no se recorta de espacios (solo `name` y `email` se recortan): «exactamente» significa que `" starter "` da 422 «Plan no válido. Valores admitidos: starter, business, enterprise.»; y como no se recorta, un valor solo de espacios no cuenta como vacío y da el mismo mensaje, no «obligatorio». Es informativo y no cambia el precio (`reglas-negocio`).
 - R12: `GET /customers` ordena por `name` con el mismo criterio de comparación de R7 (sin mayúsculas ni tildes, y con varios espacios seguidos como uno: `Álvaro` va entre `Alberto` y `Zoe`) y, si empatan, por `id` ascendente. El orden se aplica en Python.
-- R13: todo error devuelve `{"detail": "texto en español"}` con `detail` como string, incluidos los 422 de validación; no se usa el formato por defecto de FastAPI.
+- R13: todo error devuelve `{"detail": "texto en español"}` con `detail` como string, incluidos los 422 de validación, los 404 de ruta inexistente, los 405 de método no permitido y los 500 de errores no controlados (ver Errores); no se usa el formato por defecto de FastAPI.
 - R14: `%` y `_` en `q` son texto literal, no comodines (al no usar `LIKE`, R7, no hay nada que escapar).
 - R15: tras R16, de los errores de validación 422 solo se devuelve el primero, en este orden: `name`, `email`, `country`, `plan`, `tax_id`. `tax_id` va el último porque su validación depende del país (R3, R4): si `country` falta o no es válido, se devuelve el error de `country` y no se evalúa `tax_id`. El 409 solo se comprueba si no hay ningún 422 (R6).
 - R16: si el cuerpo de `POST /customers` no es un JSON válido (también si falta o está vacío) o no es un objeto (`[]`, `"x"`, `123`, `null`), 422 «Cuerpo de la petición no válido.». Es lo primero que se comprueba, antes del orden de R15. Un campo con `null` o de tipo incorrecto (`name: 123`) se trata como ausente y da el mensaje «obligatorio» de ese campo, en el orden de R15.
@@ -62,16 +62,19 @@ Primero R16 y después, en el orden de validación de R15:
 | `email` vacío, ausente, `null` o de tipo incorrecto | 422 | El email es obligatorio. |
 | `email` con formato inválido o de más de 254 caracteres | 422 | El email no es válido. |
 | `country` vacío, ausente, `null` o de tipo incorrecto | 422 | El país es obligatorio. |
-| `country` fuera de la tabla | 422 | País no admitido. |
+| `country` fuera de la tabla (incluido con espacios en los extremos, R1) | 422 | País no admitido. |
 | `plan` vacío, ausente, `null` o de tipo incorrecto | 422 | El plan es obligatorio. |
-| `plan` fuera de los tres valores | 422 | Plan no válido. Valores admitidos: starter, business, enterprise. |
+| `plan` fuera de los tres valores (incluido con espacios en los extremos, R11) | 422 | Plan no válido. Valores admitidos: starter, business, enterprise. |
 | `tax_id` vacío (o solo separadores, incluido cualquier espacio en blanco Unicode), ausente, `null` o de tipo incorrecto | 422 | El identificador fiscal es obligatorio. |
 | `tax_id` inválido (ES, o no ES con algún carácter no ASCII que no sea separador) | 422 | Identificador fiscal no válido. |
 | `tax_id` duplicado | 409 | Ya existe un cliente con ese identificador fiscal. |
-| Cliente inexistente | 404 | Cliente no encontrado. |
-| `id` no entero | 422 | Identificador de cliente no válido. |
+| Cliente inexistente (incluidos `0`, negativos y enteros mayores de 2^63-1, R8) | 404 | Cliente no encontrado. |
+| `id` que no son dígitos ASCII con un `-` opcional (`+1`, `1.0`, texto, R8) | 422 | Identificador de cliente no válido. |
+| Ruta inexistente | 404 | Recurso no encontrado. |
+| Método no permitido en una ruta existente | 405 | Método no permitido. |
+| Error no controlado | 500 | Error interno del servidor. |
 
-La respuesta 409 solo lleva `detail`, sin `id` ni otros datos del cliente existente.
+La respuesta 409 solo lleva `detail`, sin `id` ni otros datos del cliente existente. Los 404 de ruta, los 405 y los 500 también devuelven `{"detail": "..."}` con `detail` como string (R13). El 404 de ruta inexistente es distinto del 404 «Cliente no encontrado.» de R8.
 
 ## Casos límite
 - `00000000T` (DNI con número 0) es válido.
@@ -83,7 +86,7 @@ La respuesta 409 solo lleva `detail`, sin `id` ni otros datos del cliente existe
 - `tax_id` no ES de 4 caracteres: 422; de 5: 201; de 20: 201; de 21: 422; con símbolo (`AB/123`): 422; con carácter no ASCII (`ÑAB123`, `ñab123`): 422.
 - `tax_id` no ES con `ß`, `ı` o `ﬁ`: 422 aunque en mayúsculas diera ASCII válido (`straße1` daría `STRASSE1`).
 - `tax_id` no ES con U+00A0 entre caracteres ASCII (`AB`+U+00A0+`123`): 201, porque es separador; con U+00A0 junto a un carácter no ASCII (`ß`+U+00A0+`AB123`): 422.
-- Cuerpo ausente, vacío, JSON roto o no objeto (`[]`, `"x"`, `123`, `null`): 422 «Cuerpo de la petición no válida.».
+- Cuerpo ausente, vacío, JSON roto o no objeto (`[]`, `"x"`, `123`, `null`): 422 «Cuerpo de la petición no válido.».
 - Campo con `null` o de tipo incorrecto (`name: 123`, `plan: ["starter"]`, `tax_id: 12345678`): se trata como ausente.
 - Campos desconocidos (`foo`, `id: 99`): se ignoran; el `id` devuelto lo asigna el servidor.
 - `name` de 120 caracteres: 201; de 121: 422; con espacios en los extremos, se guarda recortado; solo espacios: 422.
@@ -91,6 +94,7 @@ La respuesta 409 solo lleva `detail`, sin `id` ni otros datos del cliente existe
 - Varios campos inválidos a la vez: solo se devuelve el error del primero según R15. Con `country` `XX` y `tax_id` vacío: «País no admitido.».
 - `country` o `plan` ausentes o vacíos: «El país es obligatorio.» y «El plan es obligatorio.», no «País no admitido.» ni «Plan no válido.».
 - `plan` con otra capitalización (`Starter`) o distinto de los tres valores: 422.
+- `country` o `plan` con espacios en los extremos (`" ES "`, `" starter "`): 422 «País no admitido.» y «Plan no válido. Valores admitidos: starter, business, enterprise.», porque solo `name` y `email` se recortan. Un valor solo de espacios (`"   "`) tampoco cuenta como vacío y da esos mismos mensajes, no «obligatorio».
 - `country` en minúsculas (`es`): se acepta y se guarda `ES`.
 - `country` con algún carácter no ASCII (`eſ`, con `ſ` U+017F; `ıt`, con `ı` U+0131): 422 «País no admitido.», aunque en mayúsculas diera `ES` o `IT`.
 - `q` con caracteres comodín (`%`, `_`): se tratan como texto literal.
@@ -101,7 +105,9 @@ La respuesta 409 solo lleva `detail`, sin `id` ni otros datos del cliente existe
 - Varios espacios seguidos cuentan como uno en la búsqueda por nombre, en `q` y en `name` (también U+00A0 o tabulador): `Acme   Soluciones` se encuentra con `q=acme soluciones`, y `q=acme    sol` encuentra `Acme Soluciones`. El nombre guardado conserva sus espacios.
 - Búsqueda sin resultados: 200 con lista vacía, no 404.
 - Nombres que solo difieren en mayúsculas, tildes o en el número de espacios seguidos (`ana`, `Ana`, `Aná`, `Ana  `): empatan y se ordenan por `id`.
-- `id` 0, negativo o no numérico.
+- `GET /customers/{id}` con `0`, un negativo (`-1`) o un entero que no existe, incluido uno mayor de 2^63-1: 404 «Cliente no encontrado.».
+- `GET /customers/{id}` con `+1`, un decimal (`1.0`), `1_0` o un valor no numérico (`abc`): 422 «Identificador de cliente no válido.».
+- Ruta inexistente (`/foo`): 404 «Recurso no encontrado.». Método no permitido (`DELETE /customers`): 405 «Método no permitido.». Error no controlado: 500 «Error interno del servidor.». Los tres con `{"detail": "..."}`.
 - Petición fallida (422 o 409): no se crea ninguna fila.
 
 ## Criterios de aceptación
@@ -167,6 +173,9 @@ Salvo que se indique otra cosa, las peticiones de alta llevan `name`, `email`, `
 - [ ] CA58: dados `Ana  Ruiz` (dos espacios), `Ana Ruiz` y `Álex` (en ese orden de alta), cuando se hace `GET /customers`, entonces el orden es `Álex`, `Ana  Ruiz`, `Ana Ruiz` (los dos primeros empatan en comparación y salen por `id`).
 - [ ] CA59: dado un cliente ES con `tax_id` `P1111111ı` (la última letra es `ı`, U+0131, i sin punto; en mayúsculas sería `P1111111I`, un CIF válido), cuando se crea, entonces 422 con «Identificador fiscal no válido.» y no hay fila nueva; dado `P1111111I` (ASCII), entonces 201.
 - [ ] CA60: dado `country` `eſ` (`ſ` es U+017F, la s larga; en mayúsculas sería `ES`) o `ıt` (`ı` es U+0131, i sin punto; en mayúsculas sería `IT`), cuando se crea, entonces 422 con «País no admitido.» y no hay fila nueva; dado `country` `es` (ASCII), entonces 201 y se guarda `ES`.
+- [ ] CA61: dado `country` `" ES "` (con espacios en los extremos) o `plan` `" starter "`, cuando se crea, entonces 422 con «País no admitido.» y con «Plan no válido. Valores admitidos: starter, business, enterprise.», respectivamente, y no hay fila nueva; dado un valor solo de espacios en cada campo, entonces los mismos mensajes y no «obligatorio».
+- [ ] CA62: dado `GET /customers/{id}` con `0`, `-1`, un entero inexistente y `9223372036854775808` (2^63), cuando se consulta, entonces 404 «Cliente no encontrado.»; con `+1`, `1.0`, `1_0` y `abc`, entonces 422 «Identificador de cliente no válido.».
+- [ ] CA63: dada una ruta inexistente, un método no permitido (`DELETE /customers`) y un error no controlado, cuando se piden, entonces 404 «Recurso no encontrado.», 405 «Método no permitido.» y 500 «Error interno del servidor.», todos con cuerpo `{"detail": "..."}` (string).
 
 ## Preguntas abiertas
 - Ninguna. Se cerraron las dos de la cuarta ronda (otros espacios en blanco como separadores y espacios seguidos en la búsqueda por nombre).
@@ -227,5 +236,12 @@ Sexta ronda, 2026-11-15, cambio posterior a la aprobación, por decisión de Pab
 
 Séptima ronda, 2026-11-15, cambio posterior a la aprobación, a raíz de la reauditoría 002-logica-pura-reauditoria (hallazgo 1). Redactado por el arquitecto a petición de la sesión; Pablo debe confirmarlo. La spec mantiene `Estado: Aprobada`:
 - `country`: un país con algún carácter no ASCII (`eſ`, con `ſ` U+017F; `ıt`, con `ı` U+0131) nunca se convierte en un código de la tabla, aunque en mayúsculas diera `ES` o `IT`: queda fuera de la tabla y da 422 «País no admitido.». Es una regla que ya estaba implementada (`normalize_country`) y no figuraba en la spec; se documenta (R1, Casos límite; nuevo CA60). Sin cambio de comportamiento. ADR 003 y spec 002 (R4, CA37) alineados.
+
+Octava ronda, 2026-11-15, posterior a la aprobación, por decisión de Pablo a raíz de la auditoría 003 (hallazgos 1, 2, 8 y 10). La spec mantiene `Estado: Aprobada`:
+- `country` y `plan` no se recortan de espacios; solo `name` y `email` se recortan. «Exactamente» significa que `" starter "` da 422 (R1, R11, Entradas, Errores, Casos límite; nuevo CA61). Cierra el hallazgo 2.
+- `GET /customers/{id}`: el `id` solo acepta dígitos ASCII con un `-` opcional. `0`, negativos y enteros inexistentes (incluidos los mayores de 2^63-1) dan 404; `+1`, decimales y no numéricos dan 422 «Identificador de cliente no válido.» (R8, Entradas, Errores, Casos límite; nuevo CA62). Cierra el hallazgo 8.
+- Errores: se documentan los textos de ruta inexistente (404 «Recurso no encontrado.»), método no permitido (405 «Método no permitido.») y error no controlado (500 «Error interno del servidor.»), todos en `{"detail": ...}` (R13, Errores, Casos límite; nuevo CA63). Cierra el hallazgo 1 en la spec; el 500 con ese formato necesita un manejador en el backend, que aún no existe.
+- Errata: «Cuerpo de la petición no válida.» pasa a «no válido.» en Casos límite, como en R16, Errores y CA41. Cierra el hallazgo 10.
+- Las reglas y los CA anteriores no cambian. ADR 001 (versiones de `email-validator` y `dnspython`), ADR 008 (detección del 409) y la skill `convenciones-backend` (capa `repositories/`) actualizados por la misma auditoría.
 
 Revisión de Pablo: he comprobado que el cliente tiene los cinco campos que pedía (nombre, identificador fiscal, email, país y plan). El plan lo elige el cliente, no la simulación, por eso va en el cliente. Dos clientes no pueden tener el mismo identificador fiscal aunque sea de otro país, porque es el dato que identifica a la empresa.

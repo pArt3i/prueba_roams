@@ -19,7 +19,7 @@ SaaS-O-Matic es un simulador interno de suscripciones para comerciales: alta de 
 ## Decisión
 Decidido: opción 1. Es el stack ya fijado en `CLAUDE.md`, es el más simple de arrancar y no hay requisitos que justifiquen PostgreSQL. Lo que `CLAUDE.md` y las skills `convenciones-*` ya dicen (estructura de carpetas, pytest, ruff, Vitest, sin router ni Pinia, sin dependencias nuevas sin avisar) no se repite aquí.
 
-Dependencia adicional, **autorizada por Pablo**: `email-validator`, que Pydantic exige para el tipo `EmailStr` (validación del email del cliente, [spec 001](../01-specs/001-clientes.md), R10). Es la aprobación que pide `CLAUDE.md` para añadir dependencias; cualquier otra sigue necesitando aviso previo. Se añade a las dependencias del backend cuando se implemente la spec 001.
+Dependencia adicional, **autorizada por Pablo**: `email-validator`, que Pydantic exige para el tipo `EmailStr` (validación del email del cliente, [spec 001](../01-specs/001-clientes.md), R10). Es la aprobación que pide `CLAUDE.md` para añadir dependencias; cualquier otra sigue necesitando aviso previo. Está instalada y fijada en `backend/requirements.txt` con la versión de la tabla, igual que `dnspython`, que es dependencia de `email-validator` y no se usa directamente.
 
 Versiones mínimas, por decisión de Pablo: las instaladas hoy, tomadas de `backend/requirements.txt` y `frontend/package.json`, salvo Python, que se fija como indica la tabla.
 
@@ -29,6 +29,8 @@ Versiones mínimas, por decisión de Pablo: las instaladas hoy, tomadas de `back
 | FastAPI | 0.162.7 | `requirements.txt` |
 | SQLAlchemy | 2.1.8 | `requirements.txt` |
 | Pydantic | 2.14.3 | `requirements.txt` |
+| email-validator | 2.4.0 | `requirements.txt` (instalada al implementar la spec 001) |
+| dnspython | 2.9.2 | `requirements.txt` (dependencia de `email-validator`) |
 | Node | `^22.18.0 \|\| >=24.12.0` | `engines` de `package.json` |
 | Vue | 3.5.42 | `package.json` (`^3.5.42`) |
 | Vite | 8.2.2 | `package.json` (`^8.2.2`) |
@@ -41,4 +43,4 @@ Versiones mínimas, por decisión de Pablo: las instaladas hoy, tomadas de `back
 - Si la herramienta crece a varios usuarios escribiendo a la vez, habrá que reabrir la opción 2 (el uso de SQLAlchemy y `DATABASE_URL` facilita el cambio).
 
 ## Preguntas abiertas
-- Versión mínima de `email-validator`: no figura en `backend/requirements.txt` (aún no está instalada), así que no se fija aquí. Se fija al añadirla cuando se implemente la spec 001, con la versión que se instale entonces.
+- Ninguna. La versión de `email-validator` (2.4.0) y la de `dnspython` (2.9.2) quedan fijadas en la tabla, con las que se instalaron al implementar la spec 001.
