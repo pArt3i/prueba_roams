@@ -2,7 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import App from '../App.vue'
 import { API_URL } from '@/services/customersService'
-import { jsonResponse, makeCustomer, requestedUrls, stubFetch } from './helpers'
+import { EXCHANGE_URL, callsTo, routeFetch } from './detailHelpers'
+import { resetExchangeRates } from '@/composables/useExchangeRates'
+import { jsonResponse, makeCustomer } from './helpers'
 
 const customers = [
   makeCustomer({ id: 1, name: 'Acme S.L.' }),
@@ -10,11 +12,10 @@ const customers = [
 ]
 
 describe('App', () => {
-  let fetchMock: ReturnType<typeof stubFetch>
+  let fetchMock: ReturnType<typeof routeFetch>
 
   beforeEach(() => {
-    fetchMock = stubFetch()
-    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse(customers)))
+    fetchMock = routeFetch({ customers: () => jsonResponse(customers) })
   })
 
   afterEach(() => {
@@ -46,7 +47,7 @@ describe('App', () => {
     await flushPromises()
     await wrapper.get('input[type="search"]').setValue('acme')
     await wrapper.findAll('article')[0]!.trigger('click')
-    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(callsTo(fetchMock, `${API_URL}/customers`)).toHaveLength(1)
 
     await wrapper
       .findAll('button')
@@ -55,7 +56,29 @@ describe('App', () => {
     await flushPromises()
 
     expect((wrapper.get('input[type="search"]').element as HTMLInputElement).value).toBe('')
-    expect(requestedUrls(fetchMock)).toEqual([`${API_URL}/customers`, `${API_URL}/customers`])
+    expect(callsTo(fetchMock, `${API_URL}/customers`)).toHaveLength(2)
     expect(wrapper.findAll('article')).toHaveLength(2)
+  })
+
+  it('CA26: el tipo de cambio se conserva al volver a la lista y abrir otro cliente', async () => {
+    resetExchangeRates()
+    const wrapper = mount(App)
+    await flushPromises()
+    await wrapper.findAll('article')[0]!.trigger('click')
+    await wrapper.get('select').setValue('USD')
+    await flushPromises()
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Volver a clientes')!
+      .trigger('click')
+    await flushPromises()
+
+    await wrapper.findAll('article')[1]!.trigger('click')
+    await flushPromises()
+    expect((wrapper.get('select').element as HTMLSelectElement).value).toBe('EUR')
+    await wrapper.get('select').setValue('GBP')
+    await flushPromises()
+    expect(callsTo(fetchMock, EXCHANGE_URL)).toHaveLength(1)
+    resetExchangeRates()
   })
 })

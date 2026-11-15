@@ -11,7 +11,6 @@ const { form, submitting, errorMessage } = props.create
 
 const id = useId()
 const planHintId = `${id}-plan-hint`
-
 </script>
 
 <template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import CustomerDetailPlaceholder from '@/views/CustomerDetailPlaceholder.vue'
+import CustomerDetailView from '@/views/CustomerDetailView.vue'
 import CustomersView from '@/views/CustomersView.vue'
 import type { Customer } from '@/types/customer'
 
@@ -14,7 +14,12 @@ const selected = ref<Customer | null>(null)
     <span class="topbar__brand">SaaS-O-Matic</span>
   </header>
   <main class="page">
-    <CustomerDetailPlaceholder v-if="selected" :customer="selected" @back="selected = null" />
+    <CustomerDetailView
+      v-if="selected"
+      :key="selected.id"
+      :customer="selected"
+      @back="selected = null"
+    />
     <CustomersView v-else @select="selected = $event" />
   </main>
 </template>

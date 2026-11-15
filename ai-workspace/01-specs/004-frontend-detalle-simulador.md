@@ -78,6 +78,7 @@ La vista muestra, de arriba abajo: el botón «Volver a clientes»; la ficha (no
 - R17: tipos TypeScript en `src/types/` que reflejan los schemas del backend; sin `any`. Llamadas HTTP en `src/services/`. Lógica en composables: `usePricing` (cálculo con espera, cancelación, errores y reintento), uno para el tipo de cambio, uno para el guardado y uno para el historial. La conversión vive en `src/utils/currency.ts` (R15).
 - R18: el frontend no calcula tramos ni IVA. La única aritmética de dinero permitida es `convertAmount` (R14 y R15).
 - R19: los mensajes de fallo de red, 5xx y tipo de cambio son textos propios del frontend (los de la tabla de Errores). En un 404 o un 422 con `detail` de texto se muestra ese `detail`. Un 422 sin `detail` de texto se trata como fallo de red de esa operación (igual que la spec 003, R10); en `preview`, ese fallo lleva «Reintentar» (R8).
+- R20: atribución de los tipos de cambio (términos de uso de `open.er-api.com`, [fuente](https://www.exchangerate-api.com/docs/free)): el simulador muestra siempre un enlace con el texto exacto «Rates By Exchange Rate API» y `href` `https://www.exchangerate-api.com`. Es visible con independencia de la divisa elegida (EUR, USD o GBP) y de que la API de tipos responda o falle. Puede ser discreto (texto pequeño), pero legible. No cambia ninguna otra regla (ADR 007).
 
 ## Errores
 | Situación | Código HTTP | Mensaje |
@@ -174,6 +175,7 @@ Cada criterio indica cómo se comprueba. Los marcados «Vitest» se prueban con 
 - [ ] CA36 (Vitest): dados `usePricing`, el composable del tipo de cambio, `convertAmount` y el guardado y el historial, entonces tienen tests Vitest de: `usePricing` (espera de 300 ms, cancelación y descarte de respuestas antiguas, usuarios inválidos, errores y reintento: CA5 a CA10 y CA14 a CA17), tipo de cambio (una sola petición, conservación en memoria, 5 s, tipo inválido, reintento y lectura con `String(n)`: CA25, CA26 y CA30 a CA35), conversión (CA28 y CA29) y guardado e historial (CA18 a CA23).
 - [ ] CA37 (auditor): dado el código de `frontend/src/`, entonces no hay fórmula de tramos ni de IVA, y la única aritmética de dinero es `convertAmount` (R14 y R15), sin coma flotante en los importes; el tipo se lee con `String(n)`, sin `response.text()` ni `reviver` (R15). Una conversión de divisa correcta no es una violación de «sin fórmulas de precio»; cualquier otro cálculo de importes, sí. Tampoco hay dependencias nuevas sin aviso a Pablo.
 - [ ] CA38 (comprobación visual): dado un ancho de 375 px, entonces ficha, simulador e historial se ven sin desbordes horizontales, con foco visible en slider, campos y botones y contraste suficiente.
+- [ ] CA39 (Vitest): dado el simulador, entonces hay un enlace con el texto exacto «Rates By Exchange Rate API» y `href` `https://www.exchangerate-api.com`, visible con EUR (detalle recién abierto, sin petición de tipos), con USD o GBP elegido, y también cuando la petición del tipo de cambio falla o no responde en 5 s (R20).
 
 ## Cambios de Pablo
 Primera ronda, 2026-11-15, por decisión de Pablo:
@@ -210,5 +212,8 @@ Tercera ronda, 2026-11-15, por decisión de Pablo:
 - Lectura del tipo sin coma flotante: `String(n)` del número leído, con tests (1.0829 y 1.005); si el texto contiene «e», el tipo es inválido; el ADR 007 descarta `response.text()` y `reviver` (R13, R15, Casos límite, CA34, CA35 y CA37).
 - Preguntas abiertas: todas cerradas; se elimina la sección. ADR 007 alineado (decisión de lectura y preguntas cerradas).
 - Renumeración de los CA (numeración de la Tercera ronda, la actual): CA1 a CA15 se mantienen (CA15 ajustado a red o 5xx); nuevo CA16 (reintentar con espera pendiente); los antiguos CA16 a CA30 pasan a CA17 a CA31 (el antiguo CA16 es ahora CA17, ajustado a «422 sin Reintentar»); nuevo CA32 (un tipo inválido o `result` distinto de `"success"`); el antiguo CA31 pasa a CA33; nuevos CA34 (`String(n)`) y CA35 (texto con «e»); CA32 pasa a CA36, CA33 a CA37 y CA34 a CA38. Las referencias internas a CA (intro de criterios, Casos límite, CA36 y rondas anteriores) están actualizadas.
+
+Cuarta ronda, 2026-11-15, posterior a la aprobación, por decisión de Pablo a raíz de la auditoría 006:
+- Atribución de los tipos de cambio: los términos de uso de `open.er-api.com` exigen mostrar un enlace «Rates By Exchange Rate API» a `https://www.exchangerate-api.com` dondequiera que se usen sus tipos (fuente: https://www.exchangerate-api.com/docs/free). Nueva regla R20 y nuevo criterio CA39 (Vitest); el enlace es visible siempre en el simulador, con cualquier divisa y con la API respondiendo o fallando. No se renumera nada ni cambia ninguna otra decisión. El Estado de la spec no cambia. ADR 007 actualizado (nota de términos de uso cerrada).
 
 Revisión de Pablo: el total en otra divisa es la suma del subtotal y el IVA ya convertidos, así el desglose siempre cuadra aunque difiera un céntimo del total convertido directamente.

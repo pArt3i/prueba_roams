@@ -117,3 +117,53 @@ p {
   color: var(--muted);
   font-size: 0.875rem;
 }
+
+/* Bloques de la vista de detalle: mismo lenguaje que el panel de alta. */
+.block {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-top: 6px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.block__title {
+  font-size: 1.25rem;
+}
+
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius);
+  background: var(--danger-tint);
+  color: var(--danger);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.notice--ok {
+  border-color: var(--ok);
+  background: var(--ok-tint);
+  color: var(--ok);
+}
+
+.notice:empty {
+  display: none;
+}
+
+.field .field__error {
+  color: var(--danger);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.field input[aria-invalid='true'] {
+  border-color: var(--danger);
+}

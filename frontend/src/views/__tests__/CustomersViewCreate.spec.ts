@@ -150,7 +150,9 @@ describe('CustomersView: alta de cliente', () => {
       .find((b) => b.text() === 'Cancelar')!
       .trigger('click')
 
-    pending.resolve(jsonResponse({ detail: 'Ya existe un cliente con ese identificador fiscal.' }, 409))
+    pending.resolve(
+      jsonResponse({ detail: 'Ya existe un cliente con ese identificador fiscal.' }, 409),
+    )
     await flushPromises()
     expect(wrapper.get('[role="status"]').text()).toBe('')
     expect(wrapper.findAll('article')).toHaveLength(3)
