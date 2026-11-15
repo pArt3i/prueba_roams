@@ -28,6 +28,10 @@ description: Convenciones del frontend de SaaS-O-Matic (Vue 3 con script setup, 
 - Muestra un indicador de carga sin que el importe anterior desaparezca.
 - Label asociado y `aria-label` en el slider.
 
+## Buscador
+
+- Las respuestas antiguas también se descartan en el buscador: una respuesta lenta no pisa a una más reciente.
+
 ## Divisas
 
 - Pide el tipo de cambio una vez y guárdalo en memoria.

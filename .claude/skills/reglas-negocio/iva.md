@@ -1,6 +1,6 @@
 # IVA por país (propuesta pendiente de ADR)
 
-Tipos generales de IVA. Confirma las cifras en la web oficial de la Comisión Europea antes de entregar y enlázala en el ADR: aquí no están verificadas con una fuente.
+Tipos generales de IVA. Están contrastados con las fuentes del [ADR 003](../../../ai-workspace/02-arquitectura/003-iva-por-pais.md) (tipos vigentes a 28 de septiembre de 2026).
 
 | País | Código | IVA |
 | --- | --- | --- |

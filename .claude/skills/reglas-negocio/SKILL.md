@@ -51,8 +51,9 @@ Tipos por país en `iva.md`. IVA = subtotal × tipo del país, redondeado a 2 de
 ## Divisas (propuesta)
 
 - Los precios y lo guardado en base de datos están siempre en EUR.
-- Se puede mostrar en EUR, USD y GBP con un tipo de cambio de una API pública. Importe convertido = importe en EUR × tipo, a 2 decimales.
-- Si la API de tipos falla o tarda, se muestra en EUR con un aviso visible.
+- Se puede mostrar en EUR, USD y GBP con un tipo de cambio de una API pública (ADR 007). Importe convertido = importe en EUR × tipo, a 2 decimales con ROUND_HALF_UP. La conversión es solo de presentación y se hace sin coma flotante (enteros en céntimos o aritmética decimal).
+- Subtotal e IVA se convierten cada uno por separado. El total mostrado es subtotal convertido + IVA convertido; no se convierte el total aparte. Así el desglose siempre cuadra, aunque el resultado pueda diferir en 0,01 de (total en EUR × tipo).
+- Si la API de tipos falla o no responde en 5 segundos, se muestra en EUR con un aviso visible y se puede reintentar.
 
 ## Dinero
 

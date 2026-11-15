@@ -12,8 +12,8 @@ Simulador interno de suscripciones SaaS para comerciales: alta de clientes, simu
 - No edites `.env`, archivos `.db` ni `.claude/settings.json` sin que Pablo lo pida.
 
 ## Calidad
-- Máximo 200 líneas por archivo; si crece, divídelo por responsabilidad.
-- Dinero con `Decimal` en Python, nunca `float`. El precio lo calcula el backend (ADR pendiente) y el frontend solo lo muestra.
+- Máximo 200 líneas por archivo de código (no aplica a specs ni ADR); si crece, divídelo por responsabilidad.
+- Dinero con `Decimal` en Python, nunca `float`. El precio lo calcula solo el backend. El frontend solo convierte la divisa para mostrarlo.
 - Todo endpoint y toda regla de negocio llevan test, con sus casos límite.
 - Código y nombres en inglés; textos de interfaz y mensajes de error visibles para el usuario en español.
 - No añadas dependencias nuevas sin avisar a Pablo.

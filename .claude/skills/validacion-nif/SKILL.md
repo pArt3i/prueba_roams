@@ -9,19 +9,19 @@ Los casos de prueba están en `casos.md`, en esta misma carpeta.
 
 ## Normalización (siempre antes de validar)
 
-Quitar espacios, guiones y puntos, y pasar a mayúsculas. Guardar el valor normalizado. Dos clientes con el mismo identificador normalizado son duplicados.
+Quitar espacios, guiones y puntos, y pasar a mayúsculas. «Espacios» es cualquier espacio en blanco Unicode, no solo U+0020: incluye el espacio no separable (U+00A0), el espacio ideográfico (U+3000), el tabulador y los saltos de línea (los que Python `str.isspace()` reconoce). Guardar el valor normalizado. Dos clientes con el mismo identificador normalizado son duplicados.
 
 ## DNI
 
-Formato `^\d{8}[A-Z]$`. La letra correcta es `"TRWAGMYFPDXBNJZSQVHLCKE"[número % 23]`.
+Formato `^[0-9]{8}[A-Z]$`. La letra correcta es `"TRWAGMYFPDXBNJZSQVHLCKE"[número % 23]`.
 
 ## NIE
 
-Formato `^[XYZ]\d{7}[A-Z]$`. Se sustituye la primera letra (X por 0, Y por 1, Z por 2), se forma un número de 8 dígitos y se aplica el mismo cálculo que en el DNI.
+Formato `^[XYZ][0-9]{7}[A-Z]$`. Se sustituye la primera letra (X por 0, Y por 1, Z por 2), se forma un número de 8 dígitos y se aplica el mismo cálculo que en el DNI.
 
 ## CIF
 
-Formato `^[ABCDEFGHJNPQRSUVW]\d{7}[0-9A-J]$`: letra de tipo, 7 dígitos y carácter de control.
+Formato `^[ABCDEFGHJNPQRSUVW][0-9]{7}[0-9A-J]$`: letra de tipo, 7 dígitos y carácter de control.
 
 1. Sean d1 a d7 los 7 dígitos.
 2. A = d2 + d4 + d6.
@@ -31,3 +31,5 @@ Formato `^[ABCDEFGHJNPQRSUVW]\d{7}[0-9A-J]$`: letra de tipo, 7 dígitos y carác
 6. El último carácter debe ser: el dígito si el tipo es A, B, E o H; la letra si el tipo es N, P, Q, R, S o W; cualquiera de los dos si el tipo es C, D, F, G, J, U o V.
 
 No se contemplan los NIF especiales que empiezan por K, L o M.
+
+Los dígitos son solo ASCII (0 a 9): por eso los patrones usan `[0-9]` y no `\d`, que en Python acepta dígitos de otros alfabetos (árabes, de ancho completo...).

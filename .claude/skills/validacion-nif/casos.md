@@ -8,6 +8,7 @@ Todos son para clientes de España y se normalizan antes de validar.
 | 00000000T | Sí | DNI correcto, número 0 |
 | 12345678z | Sí | Minúscula, se normaliza |
 | 12.345.678-Z | Sí | Puntos y guion, se normalizan |
+| 1234 5678Z | Sí | ` ` es el carácter real U+00A0 (espacio no separable), no el texto: el test debe construirlo. Es un espacio en blanco y se quita al normalizar |
 | X1234567L | Sí | NIE con X |
 | Y1234567X | Sí | NIE con Y |
 | Z1234567R | Sí | NIE con Z |
@@ -25,4 +26,5 @@ Todos son para clientes de España y se normalizan antes de validar.
 | P28123453 | No | El tipo P exige letra, no dígito |
 | I12345674 | No | La letra de tipo I no existe |
 | ABCDEFGHI | No | Formato inválido |
+| ١٢٣٤٥٦٧٨Z | No | Dígitos árabe-índicos (Unicode, no ASCII) en lugar de 12345678; el formato exige `[0-9]` |
 | (vacío) | No | Obligatorio para clientes de España |
