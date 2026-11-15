@@ -124,5 +124,9 @@ Los informes completos están en `03-proceso/auditorias/`.
 - La lista parpadea brevemente al buscar.
 - Python 3.12 se asume compatible pero solo se probó con 3.13.8.
 - Los 500 no llevan cabeceras CORS: el navegador los ve como fallo de red (el frontend los trata igual).
-- No se han revisado todos los límites de uso de `open.er-api.com`; el diseño (una petición por sesión) los respeta.
-- Pasada final de documentación pendiente: versión de los límites de la API en el ADR 007 y la frase de «país fuera de tabla» en ADR 003 y spec 001.
+
+## 7. Verificación desde un clon limpio
+
+**Qué hice.** Cloné el repositorio en una carpeta nueva y seguí el README tal cual, sin saltarme ningún paso.
+
+**Resultado.** Pasaron los 555 tests del backend y los 248 del frontend, y `type-check` y el build salieron sin errores.

@@ -57,7 +57,10 @@ Tests y calidad: pytest y ruff en el backend; Vitest, vue-tsc, oxlint y ESLint e
 
 ## Puesta en marcha (Windows)
 
-Requisitos: Python 3.12 o superior y Node en la versión de `engines` de `frontend/package.json` (`^22.18.0 || >=24.12.0`).
+Requisitos:
+
+- Python 3.12 o superior; se recomienda Python 3.13 (probado con 3.13.8).
+- Node en la versión de `engines` de `frontend/package.json` (`^22.18.0 || >=24.12.0`); se recomienda Node 22.22 o superior (con 22.20 funciona, pero npm muestra avisos `EBADENGINE`).
 
 ### Backend
 

@@ -28,8 +28,8 @@ Alcance de países (decisión de Pablo): la tabla se queda en ES, PT, FR, DE e I
 Cada simulación guarda, en el momento de calcular, el tipo de IVA aplicado y el subtotal, el IVA y el total en céntimos (decisión de Pablo). El historial no cambia aunque la tabla de tipos cambie después, y nada se recalcula al leer.
 
 Formato (decisión de Pablo):
-- Tipo de IVA: se guarda y se devuelve como texto decimal (`"0.21"` para el 21 %), nunca como `float`. `iva.md` lo escribe en porcentaje; la conversión es solo de presentación.
-- Importes: se guardan en céntimos enteros y la API los devuelve como texto con dos decimales (`"470.00"`).
+- Importes: en la API, texto con dos decimales (p. ej. `"470.00"`); internamente, céntimos enteros.
+- Tipo de IVA: texto (p. ej. `"0.21"` para el 21 %), nunca `float`; se guarda y se devuelve así. `iva.md` lo escribe en porcentaje; la conversión es solo de presentación.
 
 Simplificaciones asumidas (las de `iva.md`): solo tipo general; sin tipos reducidos, exenciones ni inversión del sujeto pasivo en ventas B2B dentro de la UE.
 

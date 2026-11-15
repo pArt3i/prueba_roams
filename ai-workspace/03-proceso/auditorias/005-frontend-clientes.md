@@ -1,4 +1,6 @@
 # Auditoría · Frontend de clientes (dashboard, buscador y alta)
+> Nota posterior: el hallazgo H1 quedó corregido y verificado en la [auditoría 006](006-frontend-simulador.md).
+
 Veredicto: APROBADO
 Spec revisada: ai-workspace/01-specs/003-frontend-clientes.md (Estado: Aprobada)
 Otros documentos de referencia: ai-workspace/02-arquitectura/005-planes-informativos.md y la skill `.claude/skills/convenciones-frontend`.

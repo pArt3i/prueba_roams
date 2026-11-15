@@ -14,7 +14,7 @@ La skill [`reglas-negocio`](../../.claude/skills/reglas-negocio/SKILL.md) fija q
    - Contras: dependencia externa y caché en el backend; endpoint nuevo; contradice la ubicación que sugieren las convenciones del frontend.
 
 ## Decisión
-Opción 1 (decisión de Pablo, 2026-11-15). La conversión se hace en el frontend y es solo presentación: el precio en EUR sigue calculándolo el backend (ADR 002). En concreto:
+Decidido: opción 1 (decisión de Pablo, 2026-11-15). La conversión se hace en el frontend y es solo presentación: el precio en EUR sigue calculándolo el backend (ADR 002). En concreto:
 - Lo guardado y lo calculado por el backend sigue siendo siempre EUR. El historial se muestra en EUR y no se convierte.
 - Divisas admitidas: EUR (por defecto), USD y GBP.
 - API y formato esperado (decisión de Pablo): `GET https://open.er-api.com/v6/latest/EUR`; la respuesta trae `result` con el valor `"success"` y los tipos en `rates.USD` y `rates.GBP` (unidades de cada divisa por 1 EUR). Una sola petición devuelve USD y GBP. Este formato debe verificarse con una llamada real al implementar; no se ha comprobado desde aquí.
@@ -35,7 +35,8 @@ Opción 1 (decisión de Pablo, 2026-11-15). La conversión se hace en el fronten
 - Opciones descartadas por Pablo para leer el tipo:
   - `response.text()` con extracción del texto de `rates.USD` y `rates.GBP` (por ejemplo con una expresión regular) antes o en vez de `JSON.parse`: parseo manual y frágil, y duplica la lectura y la validación de la respuesta.
   - Un `reviver` de `JSON.parse` que reciba el texto original del número: depende de un soporte del navegador que no se ha comprobado y puede variar entre navegadores.
-- Términos de uso de `open.er-api.com` (revisados, 2026-11-15; fuente: https://www.exchangerate-api.com/docs/free): exigen atribución mediante un enlace con el texto «Rates By Exchange Rate API» a `https://www.exchangerate-api.com`. Se cumple con la spec 004, R20 y CA39 (enlace siempre visible en el simulador). Los límites de uso no se han revisado.
+- Términos de uso de `open.er-api.com` (revisados, 2026-11-15; fuente: https://www.exchangerate-api.com/docs/free): exigen atribución mediante un enlace con el texto «Rates By Exchange Rate API» a `https://www.exchangerate-api.com`. Se cumple con la spec 004, R20 y CA39 (enlace siempre visible en el simulador).
+- Límites de uso del plan gratuito de `open.er-api.com`: no publica una cuota concreta de peticiones; si se abusa, bloquea la IP unos 20 minutos con un error 429; y los datos se actualizan una vez al día. El diseño (una sola petición por sesión de navegador) los respeta.
 
 ## Preguntas abiertas
 - ~~Dónde se convierte.~~ Resuelta por Pablo: en el frontend (opción 1).
