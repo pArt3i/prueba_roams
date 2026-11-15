@@ -1,18 +1,48 @@
 # ai-workspace
 
-Evidencias de cómo se ha construido SaaS-O-Matic con ayuda de IA: planificación, decisiones, directrices dadas a la IA y proceso.
+Índice de las evidencias de cómo se ha construido SaaS-O-Matic con ayuda de IA. Para ejecutar el proyecto, ver el [README principal](../README.md).
 
-| Carpeta | Contenido |
+## 1. Planificación y specs
+
+Una spec por funcionalidad, aprobada antes de escribir código (`Estado: Aprobada`).
+
+| Spec | Qué cubre |
 | --- | --- |
-| `01-specs/` | Una spec por funcionalidad, con su estado y los cambios que hizo Pablo antes de aprobarla |
-| `02-arquitectura/` | Decisiones de arquitectura (ADR) numeradas |
-| `03-proceso/bitacora.md` | Una entrada por funcionalidad: qué se pidió, qué propuso la IA, qué se corrigió y por qué |
-| `03-proceso/auditorias/` | Informes del auditor, incluidos los que pidieron cambios |
-| `03-proceso/prompts/` | Prompts que marcaron una diferencia |
+| [001 · Clientes](01-specs/001-clientes.md) | API de clientes: alta con validación de NIF/NIE/CIF y duplicados (409), búsqueda y consulta |
+| [002 · Precio y simulaciones](01-specs/002-precio-y-simulaciones.md) | Cálculo del precio mensual en el backend (tramos, IVA), guardado de simulaciones e historial |
+| [003 · Frontend de clientes](01-specs/003-frontend-clientes.md) | Dashboard con tarjetas, buscador con espera, contador y formulario de alta |
+| [004 · Frontend de detalle y simulador](01-specs/004-frontend-detalle-simulador.md) | Ficha del cliente, slider de usuarios, divisas EUR/USD/GBP, guardado e historial |
 
-## Directrices dadas a la IA
+## 2. Arquitectura y directrices a la IA
 
-- [CLAUDE.md](../CLAUDE.md): reglas generales del proyecto
-- [Skills](../.claude/skills): reglas de negocio, validación de NIF, convenciones y plantillas
-- [Subagentes](../.claude/agents): arquitecto, backend-dev, frontend-dev, qa-tester y auditor
-- [Hooks y configuración](../.claude/settings.json): formateo automático y protección de archivos sensibles
+Decisiones (ADR), todas aceptadas:
+
+| Documento | Tema |
+| --- | --- |
+| [000 · Estructura y base de datos](02-arquitectura/000-estructura-y-bd.md) | Esquema de `customers` y `simulations` y organización de carpetas (referencia, no decisión) |
+| [001 · Stack](02-arquitectura/001-stack.md) | FastAPI, SQLAlchemy y SQLite; Vue 3 y Vite |
+| [002 · Cálculo en el backend](02-arquitectura/002-calculo-precio-backend.md) | El precio se calcula solo en el backend, con un endpoint de vista previa |
+| [003 · IVA por país](02-arquitectura/003-iva-por-pais.md) | Tabla fija de tipos de IVA y simplificaciones |
+| [004 · Almacenamiento y llamadas API](02-arquitectura/004-almacenamiento-y-llamadas-api.md) | Se guardan en la simulación y no afectan al precio |
+| [005 · Planes informativos](02-arquitectura/005-planes-informativos.md) | El plan es un atributo informativo del cliente |
+| [006 · Identificador fiscal](02-arquitectura/006-validacion-identificador-fiscal.md) | Cuándo se valida NIF/NIE/CIF y qué se exige a otros países |
+| [007 · Divisas](02-arquitectura/007-divisas.md) | El frontend convierte con `open.er-api.com` y cae a EUR si falla |
+| [008 · Duplicados](02-arquitectura/008-duplicados-409.md) | Comprobación en el servicio más restricción `UNIQUE`; respuesta 409 |
+
+Directrices dadas a la IA:
+
+- [CLAUDE.md](../CLAUDE.md): reglas del proyecto (specs aprobadas antes de programar, reparto de roles, calidad y comandos).
+- [Subagentes](../.claude/agents): [arquitecto](../.claude/agents/arquitecto.md), [backend-dev](../.claude/agents/backend-dev.md), [frontend-dev](../.claude/agents/frontend-dev.md), [qa-tester](../.claude/agents/qa-tester.md) y [auditor](../.claude/agents/auditor.md).
+- [Skills](../.claude/skills): reglas de negocio ([reglas-negocio](../.claude/skills/reglas-negocio/SKILL.md)), [validacion-nif](../.claude/skills/validacion-nif/SKILL.md), convenciones ([backend](../.claude/skills/convenciones-backend/SKILL.md) y [frontend](../.claude/skills/convenciones-frontend/SKILL.md)) y plantillas y flujos ([spec-writer](../.claude/skills/spec-writer/SKILL.md), [adr](../.claude/skills/adr/SKILL.md), [bitacora-ia](../.claude/skills/bitacora-ia/SKILL.md), [verify](../.claude/skills/verify/SKILL.md)).
+- Hooks, registrados en [settings.json](../.claude/settings.json): [proteger.py](../.claude/hooks/proteger.py) bloquea la edición de `.env` y bases de datos; [formatear.py](../.claude/hooks/formatear.py) formatea cada archivo editado.
+
+## 3. Proceso y control de calidad
+
+- [Bitácora](03-proceso/bitacora.md): una entrada por funcionalidad con lo pedido, lo propuesto por la IA, lo corregido y por qué; incluye el resumen de auditorías y la deuda técnica conocida.
+- Auditorías en [03-proceso/auditorias/](03-proceso/auditorias), informes del auditor tal cual:
+  - [001 · Lógica pura de precio y NIF](03-proceso/auditorias/001-logica-pura-precio-nif.md): CAMBIOS NECESARIOS (se conserva).
+  - [002 · Reauditoría de la lógica pura](03-proceso/auditorias/002-logica-pura-reauditoria.md): APROBADO.
+  - [003 · API de clientes](03-proceso/auditorias/003-api-clientes.md): APROBADO.
+  - [004 · API de simulaciones](03-proceso/auditorias/004-api-simulaciones.md): APROBADO.
+  - [005 · Frontend de clientes](03-proceso/auditorias/005-frontend-clientes.md): APROBADO.
+  - [006 · Frontend del simulador](03-proceso/auditorias/006-frontend-simulador.md): APROBADO.
