@@ -21,7 +21,7 @@ Fuentes de los tipos, aportadas por Pablo:
    - Contras: dependencia externa para un dato que cambia pocas veces; no hay un servicio concreto elegido.
 
 ## Decisión
-Decidido: opción 1. Se aplica el IVA del país del cliente. El código de país se acepta sin distinguir mayúsculas: `es` se acepta y se guarda `ES`. Un país fuera de la tabla devuelve 422 (decisión ya tomada); ese 422 se aplica tras normalizar a mayúsculas, es decir, `es` es válido y `xx` no.
+Decidido: opción 1. Se aplica el IVA del país del cliente. El código de país se acepta sin distinguir mayúsculas: `es` se acepta y se guarda `ES`. Un país fuera de la tabla devuelve 422 (decisión ya tomada); ese 422 se aplica tras normalizar a mayúsculas, es decir, `es` es válido y `xx` no. Un país con algún carácter no ASCII (`eſ`, con `ſ` U+017F, o `ıt`, con `ı` U+0131) nunca se convierte en un código de la tabla, aunque en mayúsculas lo pareciera (`ES` e `IT`): queda fuera y da 422 «País no admitido.» (ver spec 001, R1, y spec 002, R4).
 
 Alcance de países (decisión de Pablo): la tabla se queda en ES, PT, FR, DE e IT. `AT`, `NL`, `BE` y cualquier otro país quedan fuera; ampliarla es un cambio de código y de `iva.md`.
 

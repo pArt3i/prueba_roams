@@ -33,9 +33,9 @@ Supuesto de escala: la búsqueda y el orden se hacen en Python sobre los cliente
 Todos los errores, también los de validación, devuelven `{"detail": "texto en español"}` (R13).
 
 ## Reglas de negocio
-- R1: `country` es obligatorio (ausente o vacío, 422) y debe estar en la tabla de `iva.md`; si no, 422. Se compara sin distinguir mayúsculas y se guarda en mayúsculas (`es` se guarda como `ES`).
-- R2: `tax_id` se normaliza siempre antes de validar y se guarda normalizado (`validacion-nif`), sea cual sea el país. Normalizar es quitar los guiones, los puntos y cualquier espacio en blanco Unicode (U+0020, U+00A0, U+3000, tabulador, saltos de línea...; los que Python `str.isspace()` reconoce) y pasar a mayúsculas. Fuera de ES, entre quitar los separadores y pasar a mayúsculas se aplica la comprobación ASCII de R4.
-- R3: si `country` es ES, `tax_id` debe ser un DNI, NIE o CIF válido según `validacion-nif` y sus casos.
+- R1: `country` es obligatorio (ausente o vacío, 422) y debe estar en la tabla de `iva.md`; si no, 422. Se compara sin distinguir mayúsculas y se guarda en mayúsculas (`es` se guarda como `ES`). Un `country` con algún carácter no ASCII (por ejemplo `eſ`, con `ſ` U+017F, o `ıt`, con `ı` U+0131) nunca se convierte en un código de la tabla, aunque en mayúsculas lo pareciera (`eſ` daría `ES` e `ıt` daría `IT`): queda fuera de la tabla y da 422 «País no admitido.».
+- R2: `tax_id` se normaliza siempre antes de validar y se guarda normalizado (`validacion-nif`), sea cual sea el país. Normalizar es quitar los guiones, los puntos y cualquier espacio en blanco Unicode (U+0020, U+00A0, U+3000, tabulador, saltos de línea...; los que Python `str.isspace()` reconoce) y pasar a mayúsculas. En todos los países, entre quitar los separadores y pasar a mayúsculas se aplica la comprobación de no ASCII: para ES, la de R3; para el resto, la de R4.
+- R3: si `country` es ES, `tax_id` debe ser un DNI, NIE o CIF válido según `validacion-nif` y sus casos. Además, si el `tax_id` sin separadores (R2) contiene cualquier carácter no ASCII, es inválido (422 «Identificador fiscal no válido.»); se comprueba antes de pasar a mayúsculas, porque si no `ı` (U+0131) se convertiría en `I` y podría pasar como letra de control de un CIF válido.
 - R4: si `country` no es ES, primero se mira el `tax_id` sin separadores (R2), antes de pasar a mayúsculas: si contiene cualquier carácter no ASCII (`Ñ`, acentos, `ß`, `ı`, `ﬁ`...), 422 «Identificador fiscal no válido.» (así `ß` no se convierte en `SS`). Un espacio en blanco Unicode no cuenta: es separador y ya se quitó (`AB`+U+00A0+`123` queda `AB123`, válido). Después, en mayúsculas, debe tener entre 5 y 20 caracteres y solo A–Z y 0–9; vacío, más corto, más largo o con cualquier otro carácter (símbolos), 422.
 - R5: dos clientes con el mismo `tax_id` normalizado son duplicados, aunque tengan distinto país: 409 y no se crea nada. Solo el `tax_id` genera 409 (no el nombre ni el email). El 409 no incluye el `id` del cliente existente.
 - R6: el orden de comprobación es 422 (formato) y después 409 (duplicado).
@@ -79,10 +79,11 @@ La respuesta 409 solo lleva `detail`, sin `id` ni otros datos del cliente existe
 - Mismo identificador con formato distinto (`12345678Z` frente a `12.345.678-z` o con U+00A0 entre cifras): 409.
 - Cliente no ES con el mismo identificador normalizado que uno ES (o de otro país): 409.
 - Cliente ES con un espacio en blanco no ASCII o de control entre cifras (`1234`+U+00A0+`5678Z`, U+3000, tabulador, salto de línea): se acepta y se guarda `12345678Z`.
+- Cliente ES con cualquier carácter no ASCII en el `tax_id` una vez quitados los separadores: 422, aunque en mayúsculas diera un identificador válido. `P1111111ı` (la última letra es `ı`, U+0131, i sin punto) daría `P1111111I`, un CIF válido: se rechaza. Un espacio en blanco Unicode no cuenta, porque es separador (caso anterior).
 - `tax_id` no ES de 4 caracteres: 422; de 5: 201; de 20: 201; de 21: 422; con símbolo (`AB/123`): 422; con carácter no ASCII (`ÑAB123`, `ñab123`): 422.
 - `tax_id` no ES con `ß`, `ı` o `ﬁ`: 422 aunque en mayúsculas diera ASCII válido (`straße1` daría `STRASSE1`).
 - `tax_id` no ES con U+00A0 entre caracteres ASCII (`AB`+U+00A0+`123`): 201, porque es separador; con U+00A0 junto a un carácter no ASCII (`ß`+U+00A0+`AB123`): 422.
-- Cuerpo ausente, vacío, JSON roto o no objeto (`[]`, `"x"`, `123`, `null`): 422 «Cuerpo de la petición no válido.».
+- Cuerpo ausente, vacío, JSON roto o no objeto (`[]`, `"x"`, `123`, `null`): 422 «Cuerpo de la petición no válida.».
 - Campo con `null` o de tipo incorrecto (`name: 123`, `plan: ["starter"]`, `tax_id: 12345678`): se trata como ausente.
 - Campos desconocidos (`foo`, `id: 99`): se ignoran; el `id` devuelto lo asigna el servidor.
 - `name` de 120 caracteres: 201; de 121: 422; con espacios en los extremos, se guarda recortado; solo espacios: 422.
@@ -91,6 +92,7 @@ La respuesta 409 solo lleva `detail`, sin `id` ni otros datos del cliente existe
 - `country` o `plan` ausentes o vacíos: «El país es obligatorio.» y «El plan es obligatorio.», no «País no admitido.» ni «Plan no válido.».
 - `plan` con otra capitalización (`Starter`) o distinto de los tres valores: 422.
 - `country` en minúsculas (`es`): se acepta y se guarda `ES`.
+- `country` con algún carácter no ASCII (`eſ`, con `ſ` U+017F; `ıt`, con `ı` U+0131): 422 «País no admitido.», aunque en mayúsculas diera `ES` o `IT`.
 - `q` con caracteres comodín (`%`, `_`): se tratan como texto literal.
 - `q` solo con espacios (cualquier espacio en blanco): equivale a vacío y devuelve todos. `q` solo con separadores (`---`): se busca solo por nombre.
 - `q` con otro formato que el guardado (`12.345.678-z` encuentra `12345678Z`; también con U+00A0 o tabulador entre cifras).
@@ -108,7 +110,7 @@ Salvo que se indique otra cosa, las peticiones de alta llevan `name`, `email`, `
 - [ ] CA1: dado un cliente ES con `12345678Z`, cuando se hace `POST /customers`, entonces 201 y el cuerpo contiene `id` y `tax_id` `12345678Z`.
 - [ ] CA2: dado `tax_id` `12.345.678-z`, cuando se crea, entonces 201 y se guarda y devuelve `12345678Z`.
 - [ ] CA3: dado `12345678A` (letra incorrecta) para ES, cuando se crea, entonces 422 con «Identificador fiscal no válido.» y no hay fila nueva.
-- [ ] CA4: dada cada fila de `validacion-nif/casos.md`, cuando se crea un cliente ES con ese identificador, entonces 201 si la columna dice Sí y 422 si dice No (un test por fila; en la fila con ` ` el test construye el carácter U+00A0 real).
+- [ ] CA4: dada cada fila de `validacion-nif/casos.md`, cuando se crea un cliente ES con ese identificador, entonces 201 si la columna dice Sí y 422 si dice No (un test por fila; en la fila con `[U+00A0]` el test construye el carácter U+00A0 real, y en la de `P1111111ı` el carácter U+0131 real).
 - [ ] CA5: dado `tax_id` vacío en ES, cuando se crea, entonces 422 con «El identificador fiscal es obligatorio.».
 - [ ] CA6: dado `country` `XX`, cuando se crea, entonces 422 con «País no admitido.».
 - [ ] CA7: dado un cliente ya creado, cuando se crea otro con el mismo identificador (también con otro formato), entonces 409 y el total de clientes no cambia.
@@ -163,6 +165,8 @@ Salvo que se indique otra cosa, las peticiones de alta llevan `name`, `email`, `
 - [ ] CA56: dado un cliente `Acme Soluciones S.L.`, cuando se busca `q` = `acme` + tres espacios + `sol`, o `acme` + U+00A0 + `sol`, o `acme` + tabulador + `sol`, entonces 200 con ese cliente en cada caso.
 - [ ] CA57: dado un cliente ES con `tax_id` `1234` + tabulador + `5678Z` + salto de línea, cuando se crea, entonces 201 y se guarda `12345678Z`; dado `tax_id` solo tabuladores y saltos de línea, entonces 422 con «El identificador fiscal es obligatorio.»; y `q` = `1234` + tabulador + `5678z` encuentra el cliente.
 - [ ] CA58: dados `Ana  Ruiz` (dos espacios), `Ana Ruiz` y `Álex` (en ese orden de alta), cuando se hace `GET /customers`, entonces el orden es `Álex`, `Ana  Ruiz`, `Ana Ruiz` (los dos primeros empatan en comparación y salen por `id`).
+- [ ] CA59: dado un cliente ES con `tax_id` `P1111111ı` (la última letra es `ı`, U+0131, i sin punto; en mayúsculas sería `P1111111I`, un CIF válido), cuando se crea, entonces 422 con «Identificador fiscal no válido.» y no hay fila nueva; dado `P1111111I` (ASCII), entonces 201.
+- [ ] CA60: dado `country` `eſ` (`ſ` es U+017F, la s larga; en mayúsculas sería `ES`) o `ıt` (`ı` es U+0131, i sin punto; en mayúsculas sería `IT`), cuando se crea, entonces 422 con «País no admitido.» y no hay fila nueva; dado `country` `es` (ASCII), entonces 201 y se guarda `ES`.
 
 ## Preguntas abiertas
 - Ninguna. Se cerraron las dos de la cuarta ronda (otros espacios en blanco como separadores y espacios seguidos en la búsqueda por nombre).
@@ -213,7 +217,15 @@ Quinta ronda, 2026-11-15, por decisión de Pablo:
 - Búsqueda por nombre: varios espacios en blanco seguidos cuentan como uno, en `q` y en `name`, solo para comparar y ordenar (R7, R12; nuevos CA55 a CA58). Pregunta cerrada.
 - `q=ß` encuentra `Strasse` por nombre (`casefold`): aceptable y documentado en R7 y Casos límite, sin criterio nuevo; CA53 se mantiene.
 - Límite de líneas: el máximo de 200 es solo para archivos de código, no para specs ni ADR; los casos límite compactados en la cuarta ronda se restauran con su redacción detallada, actualizada a estas decisiones.
-- Skill `validacion-nif`: «quitar espacios» incluye cualquier espacio en blanco Unicode, tabulador y saltos de línea; `casos.md` añade el caso `1234 5678Z` (válido), que CA4 recorre.
+- Skill `validacion-nif`: «quitar espacios» incluye cualquier espacio en blanco Unicode, tabulador y saltos de línea; `casos.md` añade el caso `1234[U+00A0]5678Z` (válido), que CA4 recorre.
 - ADR 002: resuelta la pregunta del formato de importes (JSON en texto con dos decimales, guardado en céntimos, ADR 003). ADR 007: USD y GBP también en texto con dos decimales. La spec 002 sigue pendiente de cerrar sus preguntas.
+
+Sexta ronda, 2026-11-15, cambio posterior a la aprobación, por decisión de Pablo a raíz de la auditoría 001-logica-pura-precio-nif (hallazgos 1 y 4). La spec mantiene `Estado: Aprobada`:
+- `tax_id` en ES: cualquier carácter no ASCII, una vez quitados los separadores, es inválido, y se comprueba antes de pasar a mayúsculas; si no, `ı` (U+0131) pasaría a `I` y podría valer como letra de control de un CIF válido. Es una regla que ya estaba implementada y no figuraba en la spec; se documenta (R3, Casos límite; nuevo CA59 con `P1111111ı`; CA4 menciona la fila nueva de `casos.md`). ADR 006 y skill `validacion-nif` alineados.
+- Notación: en CA4, en la Quinta ronda y en `casos.md`, el carácter U+00A0 que antes iba escrito literal (invisible) pasa a escribirse `[U+00A0]`, para que se vea. No cambia ninguna regla.
+- R2: la comprobación de no ASCII (entre quitar los separadores y pasar a mayúsculas) se aplica en todos los países, con remisión a R3 para ES y a R4 para el resto; antes R2 decía «Fuera de ES». Es solo un ajuste de redacción: no cambia ninguna regla ni criterio.
+
+Séptima ronda, 2026-11-15, cambio posterior a la aprobación, a raíz de la reauditoría 002-logica-pura-reauditoria (hallazgo 1). Redactado por el arquitecto a petición de la sesión; Pablo debe confirmarlo. La spec mantiene `Estado: Aprobada`:
+- `country`: un país con algún carácter no ASCII (`eſ`, con `ſ` U+017F; `ıt`, con `ı` U+0131) nunca se convierte en un código de la tabla, aunque en mayúsculas diera `ES` o `IT`: queda fuera de la tabla y da 422 «País no admitido.». Es una regla que ya estaba implementada (`normalize_country`) y no figuraba en la spec; se documenta (R1, Casos límite; nuevo CA60). Sin cambio de comportamiento. ADR 003 y spec 002 (R4, CA37) alineados.
 
 Revisión de Pablo: he comprobado que el cliente tiene los cinco campos que pedía (nombre, identificador fiscal, email, país y plan). El plan lo elige el cliente, no la simulación, por eso va en el cliente. Dos clientes no pueden tener el mismo identificador fiscal aunque sea de otro país, porque es el dato que identifica a la empresa.

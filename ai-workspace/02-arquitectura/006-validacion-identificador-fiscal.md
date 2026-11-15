@@ -20,7 +20,7 @@ El alta de clientes pide un identificador fiscal. Los algoritmos de DNI, NIE y C
 Decidido: opción 1.
 - Se normaliza siempre antes de validar y se guarda el valor normalizado (según la skill). La normalización se aplica también a los países no ES.
 - Separadores (decisión de Pablo): al normalizar se eliminan los guiones, los puntos y cualquier espacio Unicode, no solo U+0020 (U+00A0, por ejemplo, es un separador). Lo mismo vale para `q` en la búsqueda ([spec 001](../01-specs/001-clientes.md), R7).
-- País ES: DNI, NIE o CIF según la skill y sus casos.
+- País ES: DNI, NIE o CIF según la skill y sus casos. La comprobación de no ASCII se aplica también a ES (decisión de Pablo, tras la auditoría 001-logica-pura-precio-nif): sin separadores y antes de pasar a mayúsculas, cualquier carácter no ASCII hace inválido el identificador. Si no, `ı` (U+0131) pasaría a `I` y podría valer como letra de control de un CIF válido (`P1111111ı` daría `P1111111I`).
 - Otros países: formato genérico. Primero se mira el valor ya sin separadores y antes de pasar a mayúsculas: si contiene cualquier carácter no ASCII, 422 «Identificador fiscal no válido.» (decisión de Pablo). Así `ß`, `ı` o `ﬁ` no llegan a convertirse en ASCII al pasar a mayúsculas (`SS`, `I`, `FI`). Después, en mayúsculas, entre 5 y 20 caracteres y solo A–Z y 0–9; vacío, más corto, más largo o con cualquier otro carácter (símbolos, `Ñ`, acentos) devuelve 422.
 - La unicidad es solo por identificador normalizado, sin país ([ADR 008](008-duplicados-409.md)).
 - Se implementa como servicio puro en `app/services/`, sin FastAPI ni base de datos (ver `convenciones-backend`).
@@ -31,7 +31,7 @@ Decidido: opción 1.
 - Mejora: reglas en un solo sitio (la skill) y servicio fácil de probar con la tabla de `casos.md`.
 - Mejora: al guardar solo ASCII, la unicidad y la búsqueda por identificador no dependen de tildes ni de variantes Unicode. Por eso la búsqueda por identificador solo se aplica si `q`, sin separadores, es ASCII; si no, se busca solo por nombre (spec 001, R7).
 - Se complica: para países distintos de ES la validación es débil, y un identificador extranjero con letras no ASCII se rechaza aunque sea legítimo en su país.
-- La comprobación de no ASCII se hace tras quitar los separadores y antes de pasar a mayúsculas. Un test debe cubrir `ß`, `ı` y `ﬁ`, y otro un identificador con U+00A0 entre caracteres ASCII (válido) y con U+00A0 junto a un carácter no ASCII (inválido).
+- La comprobación de no ASCII se hace tras quitar los separadores y antes de pasar a mayúsculas. Un test debe cubrir `ß`, `ı` y `ﬁ`, y otro un identificador con U+00A0 entre caracteres ASCII (válido) y con U+00A0 junto a un carácter no ASCII (inválido). Para ES, otro test con `P1111111ı` (U+0131), que debe ser inválido.
 - No se contemplan los NIF especiales que empiezan por K, L o M (la skill los excluye).
 
 ## Preguntas abiertas

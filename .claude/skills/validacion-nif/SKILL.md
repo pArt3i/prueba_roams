@@ -11,6 +11,8 @@ Los casos de prueba están en `casos.md`, en esta misma carpeta.
 
 Quitar espacios, guiones y puntos, y pasar a mayúsculas. «Espacios» es cualquier espacio en blanco Unicode, no solo U+0020: incluye el espacio no separable (U+00A0), el espacio ideográfico (U+3000), el tabulador y los saltos de línea (los que Python `str.isspace()` reconoce). Guardar el valor normalizado. Dos clientes con el mismo identificador normalizado son duplicados.
 
+Antes de pasar a mayúsculas, y una vez quitados los separadores, cualquier carácter no ASCII hace inválido el identificador de ES (por ejemplo `ı`, U+0131, que en mayúsculas sería `I` y podría pasar como letra de control de un CIF válido: `P1111111ı` es inválido).
+
 ## DNI
 
 Formato `^[0-9]{8}[A-Z]$`. La letra correcta es `"TRWAGMYFPDXBNJZSQVHLCKE"[número % 23]`.

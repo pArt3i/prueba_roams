@@ -57,7 +57,7 @@ Los identificadores no se renumeran: R6 (el plan en la simulación) se retiró y
 - R1: el subtotal se calcula con los tramos acumulativos de `reglas-negocio`, con `Decimal`.
 - R2: IVA y total según `reglas-negocio` con el tipo del país (`iva.md`), redondeo ROUND_HALF_UP a 2 decimales.
 - R3: `users` es un entero entre 1 y 10 000, en `preview` y en `POST /simulations`; cualquier otro valor da 422.
-- R4: `country` de `preview` debe estar en la tabla de `iva.md`; se compara sin distinguir mayúsculas y se devuelve en mayúsculas (`es` da `ES`, como en la spec 001, R1). Ausente o vacío, 422; fuera de la tabla, 422.
+- R4: `country` de `preview` debe estar en la tabla de `iva.md`; se compara sin distinguir mayúsculas y se devuelve en mayúsculas (`es` da `ES`, como en la spec 001, R1). Ausente o vacío, 422; fuera de la tabla, 422. Un `country` con algún carácter no ASCII (por ejemplo `eſ`, con `ſ` U+017F, o `ıt`, con `ı` U+0131) nunca se convierte en un código de la tabla, aunque en mayúsculas lo pareciera (`eſ` daría `ES` e `ıt` daría `IT`): queda fuera de la tabla y da 422 «País no admitido.» (igual que la spec 001, R1).
 - R5: `storage_gb` (entero entre 0 y 1 000 000) y `api_calls` (entero entre 0 y 1 000 000 000) son obligatorios en `POST /simulations` y no tienen valor por defecto; ausentes, 422. Se guardan y no afectan a subtotal, IVA ni total (ADR 004).
 - R7: `preview` solo recibe `users` y `country`, y no escribe en la base de datos.
 - R8: `POST /simulations` recalcula el precio en el servidor; los importes guardados son EUR en céntimos enteros y nunca se aceptan del cliente: un `total` (u otro importe) enviado en el cuerpo es un campo desconocido y se ignora (R14).
@@ -95,6 +95,7 @@ Primero R18 y después, en el orden de R17:
 - `country` en el cuerpo de `POST /simulations`: se ignora, aunque sea inválido (`XX`) o distinto del país del cliente.
 - Campos desconocidos (`plan`, `total`, `id`, `foo`), en `preview` y en `POST /simulations`: se ignoran; no aparecen en la respuesta.
 - `country` en minúsculas en `preview` (`es`): 200 con `ES`.
+- `country` de `preview` con algún carácter no ASCII (`eſ`, con `ſ` U+017F; `ıt`, con `ı` U+0131): 422 «País no admitido.», aunque en mayúsculas diera `ES` o `IT`.
 - `customer_id` entero que no existe (0, negativo, o mayor que el entero máximo de la base de datos): 404, nunca 500.
 - Petición con varios campos inválidos: solo el primer error según R17, y con un `customer_id` inexistente y `users` = 0 gana el 422 de `users`.
 - Cuerpo ausente, vacío, JSON roto o no objeto: 422 «Cuerpo de la petición no válido.».
@@ -111,7 +112,7 @@ Salvo que se indique otra cosa, `POST /simulations` lleva `customer_id` de un cl
 
 - [ ] CA1: dada cada fila de «Ejemplos resueltos» de `reglas-negocio`, cuando se llama a `preview` con ES y esos usuarios, entonces el `subtotal` es el de la fila, con dos decimales (un test por fila).
 - [ ] CA2: dada cada fila de la tabla de IVA de `reglas-negocio` (usuarios, país), cuando se llama a `preview`, entonces `subtotal`, `vat` y `total` son los de la fila, con dos decimales, y `vat_rate` es el tipo de `iva.md` en texto decimal (`"0.21"`, `"0.19"`, `"0.23"`).
-- [ ] CA3: dado cada país de `iva.md` (incluidos FR e IT) y 10 usuarios, cuando se llama a `preview`, entonces `vat_rate` es su tipo en texto decimal, `vat` es el subtotal por ese tipo y `total` es subtotal más IVA.
+- [ ] CA3: dado cada país de `iva.md` (incluidos FR e IT) y 10 usuarios, cuando se llama a `preview`, entonces `vat_rate` es su tipo en texto decimal con dos decimales, `vat` es el subtotal por ese tipo y `total` es subtotal más IVA. Ejemplos con 10 usuarios (subtotal `"100.00"`): ES `"0.21"`, PT `"0.23"`, FR `"0.20"` (con dos decimales, no `"0.2"`), DE `"0.19"` e IT `"0.22"`.
 - [ ] CA4: dado 60 usuarios y ES, cuando se llama a `preview`, entonces la respuesta tiene exactamente las claves `users`, `country`, `currency`, `vat_rate`, `subtotal`, `vat` y `total`, `currency` es `"EUR"`, `users` es un entero y los importes y `vat_rate` son cadenas (ejemplo de Salidas).
 - [ ] CA5: dado `users` 10000, cuando se llama a `preview` con ES, entonces 200 con `subtotal` `"50170.00"` (fórmula de la skill: 100 + 320 + 49750); con 10001, 422 con «El número de usuarios debe ser un entero entre 1 y 10000.».
 - [ ] CA6: dado `users` 0, -1, 1.5, `"abc"`, `true`, `null` o ausente, cuando se llama a `preview`, entonces 422 con «El número de usuarios debe ser un entero entre 1 y 10000.» (un test por valor).
@@ -145,6 +146,7 @@ Salvo que se indique otra cosa, `POST /simulations` lleva `customer_id` de un cl
 - [ ] CA34: dado `created_at` de una simulación, cuando se devuelve, entonces es una cadena ISO 8601 que termina en `Z` y se interpreta como UTC.
 - [ ] CA35: dado un valor forzado que exija redondeo (test unitario del servicio), entonces se aplica ROUND_HALF_UP a 2 decimales.
 - [ ] CA36: dados importes y tipos de IVA en cualquier endpoint, cuando se serializa la respuesta, entonces ninguno es un número JSON (siempre cadena).
+- [ ] CA37: dado `country` `eſ` (`ſ` es U+017F, la s larga; en mayúsculas sería `ES`) o `ıt` (`ı` es U+0131, i sin punto; en mayúsculas sería `IT`), cuando se llama a `preview` con 10 usuarios, entonces 422 con «País no admitido.»; dado `country` `es` (ASCII), entonces 200 con `ES`.
 
 ## Cambios de Pablo
 Primera ronda, 2026-11-15, por decisión de Pablo:
@@ -169,6 +171,10 @@ Primera ronda, 2026-11-15, por decisión de Pablo:
   - Orden de validación en `preview`: cuerpo, `users`, `country`.
   - Coerción estricta también en `customer_id`, `storage_gb` y `api_calls`, no solo en `users`.
   - Valores de los criterios CA5 (10 000 usuarios: subtotal `50170.00`) y CA33 (60 usuarios con ES: 47000, 9870 y 56870 céntimos).
+
+Segunda ronda, 2026-11-15, cambio posterior a la aprobación, a raíz de la reauditoría 002-logica-pura-reauditoria (hallazgos 1 y 2). Redactado por el arquitecto a petición de la sesión; Pablo debe confirmarlo. La spec mantiene `Estado: Aprobada`:
+- `country`: un país con algún carácter no ASCII (`eſ`, con `ſ` U+017F; `ıt`, con `ı` U+0131) nunca se convierte en un código de la tabla, aunque en mayúsculas diera `ES` o `IT`: queda fuera de la tabla y da 422 «País no admitido.». Es una regla que ya estaba implementada y no figuraba en la spec; se documenta (R4, Casos límite; nuevo CA37). Sin cambio de comportamiento. Alineados la spec 001 (R1, CA60) y el ADR 003.
+- Tipo de FR: se confirma que `vat_rate` de FR es `"0.20"` (texto con dos decimales, no `"0.2"`); se añade a los ejemplos de CA3, con los demás países (ES `"0.21"`, PT `"0.23"`, DE `"0.19"`, IT `"0.22"`). Sin cambio de comportamiento: el servicio ya devolvía `"0.20"`.
 
 
 Revisión de Pablo: cada simulación guarda el IVA y los importes del momento en que se hizo, para que el historial no cambie si luego cambia el IVA de un país. El precio lo calcula siempre el servidor y nunca se fía de lo que manda el cliente.
