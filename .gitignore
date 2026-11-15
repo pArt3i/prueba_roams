@@ -1,0 +1,9 @@
+.venv/
+node_modules/
+*.db
+.env
+.claude/settings.local.json
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+dist/
