@@ -1,47 +1,48 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
+import { ref } from 'vue'
+import CustomerDetailPlaceholder from '@/views/CustomerDetailPlaceholder.vue'
+import CustomersView from '@/views/CustomersView.vue'
+import type { Customer } from '@/types/customer'
+
+// Sin router (R5): dos vistas y el cliente seleccionado. Al volver, la lista
+// se monta de nuevo y se recarga desde la API.
+const selected = ref<Customer | null>(null)
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
+  <header class="topbar">
+    <span class="topbar__brand">SaaS-O-Matic</span>
   </header>
-
-  <main>
-    <TheWelcome />
+  <main class="page">
+    <CustomerDetailPlaceholder v-if="selected" :customer="selected" @back="selected = null" />
+    <CustomersView v-else @select="selected = $event" />
   </main>
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
+.topbar {
+  padding: 0.75rem 1rem;
+  background: var(--ink);
+  color: #fff;
 }
 
-.logo {
+.topbar__brand {
   display: block;
-  margin: 0 auto 2rem;
+  max-width: 72rem;
+  margin: 0 auto;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
+.page {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
+@media (min-width: 40rem) {
+  .page {
+    padding: 2rem 1.5rem 4rem;
   }
 }
 </style>

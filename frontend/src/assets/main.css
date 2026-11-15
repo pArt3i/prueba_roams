@@ -1,35 +1,119 @@
-@import './base.css';
+:root {
+  --paper: #eceff1;
+  --surface: #ffffff;
+  --ink: #14212b;
+  --muted: #475662;
+  --line: #c3ccd3;
+  --accent: #0b5c63;
+  --accent-strong: #073f45;
+  --accent-tint: #dcecee;
+  --focus: #1d4ed8;
+  --danger: #8f1d1d;
+  --danger-tint: #fbe9e9;
+  --ok: #14532d;
+  --ok-tint: #e1f3e6;
+  --radius: 6px;
+  --font:
+    'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial,
+    sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 1rem;
+  line-height: 1.5;
+}
 
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-weight: normal;
+  min-height: 100vh;
 }
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
+h1,
+h2,
+h3,
+p {
+  margin: 0;
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
+/* Foco visible en todo lo interactivo (R13). */
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
 }
 
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.5rem 1.1rem;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
 
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
+.btn:hover:not(:disabled) {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn--quiet {
+  background: transparent;
+  color: var(--accent-strong);
+}
+
+.btn--quiet:hover:not(:disabled) {
+  background: var(--accent-tint);
+  border-color: var(--accent);
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.field label {
+  font-weight: 600;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid #7a8994;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+
+.field input:focus-visible,
+.field select:focus-visible {
+  outline-offset: 0;
+  border-color: var(--focus);
+}
+
+.field .hint {
+  color: var(--muted);
+  font-size: 0.875rem;
 }
