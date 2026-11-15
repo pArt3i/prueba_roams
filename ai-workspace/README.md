@@ -39,6 +39,7 @@ Directrices dadas a la IA:
 ## 3. Proceso y control de calidad
 
 - [Bitácora](03-proceso/bitacora.md): una entrada por funcionalidad con lo pedido, lo propuesto por la IA, lo corregido y por qué; incluye el resumen de auditorías y la deuda técnica conocida.
+- [Prompts clave](03-proceso/prompts/prompts-clave.md): los 20 prompts clave enviados a Claude Code, con el motivo de cada uno y su resultado.
 - Auditorías en [03-proceso/auditorias/](03-proceso/auditorias), informes del auditor tal cual:
   - [001 · Lógica pura de precio y NIF](03-proceso/auditorias/001-logica-pura-precio-nif.md): CAMBIOS NECESARIOS (se conserva).
   - [002 · Reauditoría de la lógica pura](03-proceso/auditorias/002-logica-pura-reauditoria.md): APROBADO.
