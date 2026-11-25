@@ -40,4 +40,17 @@ Lo que le dije a la IA y cómo la configuré:
 - [CLAUDE.md](../CLAUDE.md): reglas del proyecto (specs aprobadas antes de programar, reparto de roles, calidad y comandos).
 - [Subagentes](../.claude/agents): [arquitecto](../.claude/agents/arquitecto.md), [backend-dev](../.claude/agents/backend-dev.md), [frontend-dev](../.claude/agents/frontend-dev.md), [qa-tester](../.claude/agents/qa-tester.md) y [auditor](../.claude/agents/auditor.md).
 - [Skills](../.claude/skills): reglas de negocio ([reglas-negocio](../.claude/skills/reglas-negocio/SKILL.md)), [validacion-nif](../.claude/skills/validacion-nif/SKILL.md), convenciones ([backend](../.claude/skills/convenciones-backend/SKILL.md) y [frontend](../.claude/skills/convenciones-frontend/SKILL.md)) y plantillas y flujos ([spec-writer](../.claude/skills/spec-writer/SKILL.md), [adr](../.claude/skills/adr/SKILL.md), [bitacora-ia](../.claude/skills/bitacora-ia/SKILL.md), [verify](../.claude/skills/verify/SKILL.md)).
-- Hooks, registrados en [settings.json](../.claude/settings.json):
+- Hooks, registrados en [settings.json](../.claude/settings.json): [proteger.py](../.claude/hooks/proteger.py) bloquea la edición de `.env` y bases de datos; [formatear.py](../.claude/hooks/formatear.py) formatea cada archivo editado.
+
+## 3. Proceso y control de calidad
+
+- [Bitácora](03-proceso/bitacora.md): una entrada por funcionalidad con lo que pedí, lo que propuso la IA, lo que corregí y por qué; incluye el resumen de auditorías y la deuda técnica conocida.
+- [Prompts clave](03-proceso/prompts/prompts-clave.md): los 20 prompts clave que envié a Claude Code, con el motivo de cada uno y su resultado.
+- [Capturas del proceso](03-proceso/capturas/README.md): siete capturas de momentos clave: una auditoría que pidió cambios, un error 500 y una condición de carrera detectados, los tests y mis cambios en una spec.
+- Auditorías en [03-proceso/auditorias/](03-proceso/auditorias), informes del auditor tal cual. La 001 pidió cambios y la conservo como salió:
+  - [001 · Lógica pura de precio y NIF](03-proceso/auditorias/001-logica-pura-precio-nif.md): CAMBIOS NECESARIOS.
+  - [002 · Reauditoría de la lógica pura](03-proceso/auditorias/002-logica-pura-reauditoria.md): APROBADO.
+  - [003 · API de clientes](03-proceso/auditorias/003-api-clientes.md): APROBADO.
+  - [004 · API de simulaciones](03-proceso/auditorias/004-api-simulaciones.md): APROBADO.
+  - [005 · Frontend de clientes](03-proceso/auditorias/005-frontend-clientes.md): APROBADO.
+  - [006 · Frontend del simulador](03-proceso/auditorias/006-frontend-simulador.md): APROBADO.
