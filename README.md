@@ -98,9 +98,9 @@ Backend:
 
 ```
 cd backend
-.venv/Scripts/python -m pytest -q
-.venv/Scripts/python -m ruff format .
-.venv/Scripts/python -m ruff check .
+.venv\Scripts\python -m pytest -q
+.venv\Scripts\python -m ruff format .
+.venv\Scripts\python -m ruff check .
 ```
 
 Frontend:
