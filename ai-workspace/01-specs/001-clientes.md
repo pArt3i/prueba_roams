@@ -39,10 +39,10 @@ Todos los errores, también los de validación, devuelven `{"detail": "texto en 
 - R4: si `country` no es ES, primero se mira el `tax_id` sin separadores (R2), antes de pasar a mayúsculas: si contiene cualquier carácter no ASCII (`Ñ`, acentos, `ß`, `ı`, `ﬁ`...), 422 «Identificador fiscal no válido.» (así `ß` no se convierte en `SS`). Un espacio en blanco Unicode no cuenta: es separador y ya se quitó (`AB`+U+00A0+`123` queda `AB123`, válido). Después, en mayúsculas, debe tener entre 5 y 20 caracteres y solo A–Z y 0–9; vacío, más corto, más largo o con cualquier otro carácter (símbolos), 422.
 - R5: dos clientes con el mismo `tax_id` normalizado son duplicados, aunque tengan distinto país: 409 y no se crea nada. Solo el `tax_id` genera 409 (no el nombre ni el email). El 409 no incluye el `id` del cliente existente.
 - R6: el orden de comprobación es 422 (formato) y después 409 (duplicado).
-- R7: `GET /customers?q=` recorta `q` de espacios en blanco en los extremos. Sin `q` o con `q` vacío devuelve todos los clientes. Con `q`, devuelve los clientes que cumplan alguna de estas condiciones, con coincidencia parcial: (a) su `name` contiene `q`; (b) su `tax_id` contiene `q` normalizado igual que `tax_id` (R2), pero solo si `q`, sin separadores y antes de pasar a mayúsculas, es ASCII; si tiene algún carácter no ASCII (`ß`, `ñ`, `é`...), no se busca por identificador y solo cuenta (a). En (a) la comparación ignora mayúsculas y tildes (incluida la `ñ`): descomponer en NFD, quitar marcas diacríticas y `casefold`, sin `upper()`. Además, cada serie de espacios en blanco seguidos (U+0020, U+00A0, tabulador...) cuenta como un solo espacio. Todo esto se aplica a `q` y a `name` solo para comparar: el nombre guardado y devuelto no cambia. `jose` encuentra `José`, `nu` encuentra `Núñez` y `acme   sol` encuentra `Acme Soluciones`. Como `casefold` convierte `ß` en `ss`, `q=ß` encuentra por nombre `Strasse`; es aceptable (decisión de Pablo). Se hace en Python sobre los clientes leídos, no con `LIKE` de SQL. Si `q` queda vacío tras quitar separadores, solo se busca por `name`.
+- R7: `GET /customers?q=` recorta `q` de espacios en blanco en los extremos. Sin `q` o con `q` vacío devuelve todos los clientes. Con `q`, devuelve los clientes que cumplan alguna de estas condiciones, con coincidencia parcial: (a) su `name` contiene `q`; (b) su `tax_id` contiene `q` normalizado igual que `tax_id` (R2), pero solo si `q`, sin separadores y antes de pasar a mayúsculas, es ASCII; si tiene algún carácter no ASCII (`ß`, `ñ`, `é`...), no se busca por identificador y solo cuenta (a). En (a) la comparación ignora mayúsculas y tildes (incluida la `ñ`): descomponer en NFD, quitar marcas diacríticas y `casefold`, sin `upper()`. Además, cada serie de espacios en blanco seguidos (U+0020, U+00A0, tabulador...) cuenta como un solo espacio. Todo esto se aplica a `q` y a `name` solo para comparar: el nombre guardado y devuelto no cambia. `jose` encuentra `José`, `nu` encuentra `Núñez` y `acme   sol` encuentra `Acme Soluciones`. Como `casefold` convierte `ß` en `ss`, `q=ß` encuentra por nombre `Strasse`; es aceptable (decisión mía). Se hace en Python sobre los clientes leídos, no con `LIKE` de SQL. Si `q` queda vacío tras quitar separadores, solo se busca por `name`.
 - R8: `GET /customers/{id}` solo acepta como `id` dígitos ASCII (`0`-`9`) con un signo `-` opcional delante. Con ese formato, el `id` que no corresponde a ningún cliente devuelve 404 «Cliente no encontrado.»: `0`, los negativos y los enteros que no existen, incluidos los mayores de 2^63-1. Con cualquier otro formato (`+1`, decimales como `1.0`, `1_0`, texto no numérico, dígitos que no sean ASCII), 422 «Identificador de cliente no válido.».
 - R9: `name` se recorta de espacios y se guarda recortado; vacío o ausente, 422; más de 120 caracteres (tras recortar), 422.
-- R10: `email` es obligatorio; se recorta y se pasa a minúsculas antes de validar y se guarda así. Se valida con `EmailStr` de Pydantic (dependencia `email-validator`, autorizada por Pablo; ver ADR 001); sin formato válido, 422. Máximo 254 caracteres tras recortar; 255 o más, 422 con el mismo mensaje que el formato inválido. El email no es único: dos clientes pueden compartirlo.
+- R10: `email` es obligatorio; se recorta y se pasa a minúsculas antes de validar y se guarda así. Se valida con `EmailStr` de Pydantic (dependencia `email-validator`, autorizada por mí; ver ADR 001); sin formato válido, 422. Máximo 254 caracteres tras recortar; 255 o más, 422 con el mismo mensaje que el formato inválido. El email no es único: dos clientes pueden compartirlo.
 - R11: `plan` es obligatorio (ausente o vacío, 422) y debe ser exactamente `starter`, `business` o `enterprise`; cualquier otro valor, 422. `plan` no se recorta de espacios (solo `name` y `email` se recortan): «exactamente» significa que `" starter "` da 422 «Plan no válido. Valores admitidos: starter, business, enterprise.»; y como no se recorta, un valor solo de espacios no cuenta como vacío y da el mismo mensaje, no «obligatorio». Es informativo y no cambia el precio (`reglas-negocio`).
 - R12: `GET /customers` ordena por `name` con el mismo criterio de comparación de R7 (sin mayúsculas ni tildes, y con varios espacios seguidos como uno: `Álvaro` va entre `Alberto` y `Zoe`) y, si empatan, por `id` ascendente. El orden se aplica en Python.
 - R13: todo error devuelve `{"detail": "texto en español"}` con `detail` como string, incluidos los 422 de validación, los 404 de ruta inexistente, los 405 de método no permitido y los 500 de errores no controlados (ver Errores); no se usa el formato por defecto de FastAPI.
@@ -101,7 +101,7 @@ La respuesta 409 solo lleva `detail`, sin `id` ni otros datos del cliente existe
 - `q` solo con espacios (cualquier espacio en blanco): equivale a vacío y devuelve todos. `q` solo con separadores (`---`): se busca solo por nombre.
 - `q` con otro formato que el guardado (`12.345.678-z` encuentra `12345678Z`; también con U+00A0 o tabulador entre cifras).
 - `q` con otra combinación de mayúsculas y tildes que el nombre: `JOSÉ` encuentra `Jose`, `jose` encuentra `José`, `nu` encuentra `Núñez`.
-- `q` con algún carácter no ASCII (`ß`, `ñ`): solo se busca por nombre, con `casefold` y sin tildes. `q=ß` encuentra `Strasse` por nombre (`ß` se compara como `ss`), pero no por identificador: aceptado por Pablo.
+- `q` con algún carácter no ASCII (`ß`, `ñ`): solo se busca por nombre, con `casefold` y sin tildes. `q=ß` encuentra `Strasse` por nombre (`ß` se compara como `ss`), pero no por identificador: aceptado por mí.
 - Varios espacios seguidos cuentan como uno en la búsqueda por nombre, en `q` y en `name` (también U+00A0 o tabulador): `Acme   Soluciones` se encuentra con `q=acme soluciones`, y `q=acme    sol` encuentra `Acme Soluciones`. El nombre guardado conserva sus espacios.
 - Búsqueda sin resultados: 200 con lista vacía, no 404.
 - Nombres que solo difieren en mayúsculas, tildes o en el número de espacios seguidos (`ana`, `Ana`, `Aná`, `Ana  `): empatan y se ordenan por `id`.
@@ -180,9 +180,9 @@ Salvo que se indique otra cosa, las peticiones de alta llevan `name`, `email`, `
 ## Preguntas abiertas
 - Ninguna. Se cerraron las dos de la cuarta ronda (otros espacios en blanco como separadores y espacios seguidos en la búsqueda por nombre).
 
-## Cambios de Pablo
-**Nota original de Pablo**
-Cambios aplicados el 2026-11-15, por decisión de Pablo:
+## Mis cambios
+**Mi nota original**
+Cambios aplicados el 2026-11-15, por decisión mía:
 - Campos: el cliente tiene `name`, `tax_id`, `email`, `country` y `plan`, todos obligatorios (Entradas, Salidas, R9 a R11).
 - `email`: formato válido, guardado en minúsculas y sin espacios en los extremos (R10).
 - `plan`: `starter`, `business` o `enterprise`; otro valor, 422 (R11).
@@ -195,8 +195,8 @@ Cambios aplicados el 2026-11-15, por decisión de Pablo:
 - Criterios de aceptación: CA1 a CA16 sin cambios salvo CA9 (ahora remite a R4); nuevos CA17 a CA31.
 - Preguntas abiertas: eliminadas las resueltas (campos, búsqueda, paginación y orden, formato genérico, unicidad, país en minúsculas, formato de errores 422, `id` en el 409); añadidas cuatro nuevas.
 
-Segunda ronda, 2026-11-15, por decisión de Pablo:
-- Email: se valida con `EmailStr` de Pydantic; Pablo autoriza la dependencia `email-validator` (anotada en el ADR 001); máximo 254 caracteres; se guarda recortado y en minúsculas (R10).
+Segunda ronda, 2026-11-15, por decisión mía:
+- Email: se valida con `EmailStr` de Pydantic; autorizo la dependencia `email-validator` (anotada en el ADR 001); máximo 254 caracteres; se guarda recortado y en minúsculas (R10).
 - Validación: solo se devuelve el primer error, en el orden `name`, `email`, `country`, `plan`, `tax_id` (el último porque depende del país); mensajes nuevos «El país es obligatorio.» y «El plan es obligatorio.» (R1, R11, R15).
 - Búsqueda y orden: ignoran mayúsculas y tildes (`ñ`, acentos) con comparación Unicode, en Python sobre los clientes leídos y no con `LIKE`; los comodines son texto literal; vale para unos cientos de clientes (R7, R12, R14).
 - `tax_id` fuera de ES: solo A–Z y 0–9 (ASCII) tras normalizar y pasar a mayúsculas; actualizado el ADR 006 (R4).
@@ -204,7 +204,7 @@ Segunda ronda, 2026-11-15, por decisión de Pablo:
 - Criterios de aceptación: ajustados CA8, CA9, CA16 y CA20 (el plan ausente pasa a CA36); nuevos CA32 a CA40.
 - Preguntas abiertas: cerradas las del criterio y la longitud del email, los mensajes de país y plan ausentes, el orden de varios errores y las tildes y `ñ`; quedan tres (la de la `Ñ` pasa a ser la de mayúsculas que cambian de alfabeto).
 
-Tercera ronda, 2026-11-15, por decisión de Pablo:
+Tercera ronda, 2026-11-15, por decisión mía:
 - Email de más de 254 caracteres: se reutiliza «El email no es válido.» (R10, Errores; ya lo cubre CA32). Pregunta cerrada.
 - Cuerpo mal formado: si no es JSON válido o no es un objeto, 422 «Cuerpo de la petición no válido.»; un campo `null` o de tipo incorrecto se trata como ausente, con el «obligatorio» de ese campo (R16, R15, Errores; nuevos CA41 a CA45). Pregunta cerrada.
 - `tax_id` fuera de ES: si el original contiene cualquier carácter no ASCII, 422 «Identificador fiscal no válido.», comprobado antes de pasar a mayúsculas (R2, R4; nuevos CA46 y CA47; ADR 006 actualizado). Sustituye la pregunta sobre `ß`, `ı` y `ﬁ`.
@@ -213,7 +213,7 @@ Tercera ronda, 2026-11-15, por decisión de Pablo:
 - Versiones mínimas del ADR 001 y skills `validacion-nif` (patrones `[0-9]`, nuevo caso con dígitos Unicode en `casos.md`, que CA4 ya recorre) y `reglas-negocio` (`iva.md`): actualizados sin cambios en esta spec.
 - Preguntas abiertas: cerradas las tres anteriores; quedan tres nuevas (campos desconocidos, qué cuenta como espacio y `q` con caracteres no ASCII).
 
-Cuarta ronda, 2026-11-15, por decisión de Pablo:
+Cuarta ronda, 2026-11-15, por decisión mía:
 - Campos desconocidos en el alta: se ignoran (nuevo R17; CA48). Pregunta cerrada.
 - Espacios: al normalizar `tax_id` y `q`, cualquier espacio Unicode (incluido U+00A0) es separador y se elimina; la regla de no ASCII se aplica al valor que queda (R2, R4, Errores, Casos límite). CA47 cambia: `AB`+U+00A0+`123` pasa de 422 a 201 (se guarda `AB123`). Nuevos CA49 a CA52. Pregunta cerrada.
 - `q` no ASCII: la búsqueda por identificador solo se aplica si `q`, sin separadores, es ASCII; si no, solo por nombre, con `casefold` y sin tildes, sin `upper()` (R7; nuevos CA53 y CA54). Pregunta cerrada.
@@ -221,7 +221,7 @@ Cuarta ronda, 2026-11-15, por decisión de Pablo:
 - Pendiente para la spec 002 (no editada): sigue (a), (b) y (d); el (c) queda decidido por el ADR 003 (céntimos guardados, `"470.00"` y `"0.21"` en la API), así que la spec 002 debe cerrar esas preguntas y aplicarlo.
 - Preguntas abiertas: cerradas las tres anteriores; quedan dos nuevas (tabulador y saltos de línea; espacios internos de `q` en el nombre).
 
-Quinta ronda, 2026-11-15, por decisión de Pablo:
+Quinta ronda, 2026-11-15, por decisión mía:
 - Separadores: en `tax_id` y `q`, cualquier espacio en blanco, incluidos el tabulador y los saltos de línea, cuenta como separador (R2, R7, Entradas, Errores, Casos límite; CA57). Pregunta cerrada.
 - Búsqueda por nombre: varios espacios en blanco seguidos cuentan como uno, en `q` y en `name`, solo para comparar y ordenar (R7, R12; nuevos CA55 a CA58). Pregunta cerrada.
 - `q=ß` encuentra `Strasse` por nombre (`casefold`): aceptable y documentado en R7 y Casos límite, sin criterio nuevo; CA53 se mantiene.
@@ -229,19 +229,19 @@ Quinta ronda, 2026-11-15, por decisión de Pablo:
 - Skill `validacion-nif`: «quitar espacios» incluye cualquier espacio en blanco Unicode, tabulador y saltos de línea; `casos.md` añade el caso `1234[U+00A0]5678Z` (válido), que CA4 recorre.
 - ADR 002: resuelta la pregunta del formato de importes (JSON en texto con dos decimales, guardado en céntimos, ADR 003). ADR 007: USD y GBP también en texto con dos decimales. La spec 002 sigue pendiente de cerrar sus preguntas.
 
-Sexta ronda, 2026-11-15, cambio posterior a la aprobación, por decisión de Pablo a raíz de la auditoría 001-logica-pura-precio-nif (hallazgos 1 y 4). La spec mantiene `Estado: Aprobada`:
+Sexta ronda, 2026-11-15, cambio posterior a la aprobación, por decisión mía a raíz de la auditoría 001-logica-pura-precio-nif (hallazgos 1 y 4). La spec mantiene `Estado: Aprobada`:
 - `tax_id` en ES: cualquier carácter no ASCII, una vez quitados los separadores, es inválido, y se comprueba antes de pasar a mayúsculas; si no, `ı` (U+0131) pasaría a `I` y podría valer como letra de control de un CIF válido. Es una regla que ya estaba implementada y no figuraba en la spec; se documenta (R3, Casos límite; nuevo CA59 con `P1111111ı`; CA4 menciona la fila nueva de `casos.md`). ADR 006 y skill `validacion-nif` alineados.
 - Notación: en CA4, en la Quinta ronda y en `casos.md`, el carácter U+00A0 que antes iba escrito literal (invisible) pasa a escribirse `[U+00A0]`, para que se vea. No cambia ninguna regla.
 - R2: la comprobación de no ASCII (entre quitar los separadores y pasar a mayúsculas) se aplica en todos los países, con remisión a R3 para ES y a R4 para el resto; antes R2 decía «Fuera de ES». Es solo un ajuste de redacción: no cambia ninguna regla ni criterio.
 
-Séptima ronda, 2026-11-15, cambio posterior a la aprobación, a raíz de la reauditoría 002-logica-pura-reauditoria (hallazgo 1). Redactado por el arquitecto a petición de la sesión; Pablo debe confirmarlo. La spec mantiene `Estado: Aprobada`:
+Séptima ronda, 2026-11-15, cambio posterior a la aprobación, a raíz de la reauditoría 002-logica-pura-reauditoria (hallazgo 1). Redactado por el arquitecto a propuesta de la sesión de Claude Code a raíz de la reauditoría; lo confirmé yo. La spec mantiene `Estado: Aprobada`:
 - `country`: un país con algún carácter no ASCII (`eſ`, con `ſ` U+017F; `ıt`, con `ı` U+0131) nunca se convierte en un código de la tabla, aunque en mayúsculas diera `ES` o `IT`: queda fuera de la tabla y da 422 «País no admitido.». Es una regla que ya estaba implementada (`normalize_country`) y no figuraba en la spec; se documenta (R1, Casos límite; nuevo CA60). Sin cambio de comportamiento. ADR 003 y spec 002 (R4, CA37) alineados.
 
-Octava ronda, 2026-11-15, posterior a la aprobación, por decisión de Pablo a raíz de la auditoría 003 (hallazgos 1, 2, 8 y 10). La spec mantiene `Estado: Aprobada`:
+Octava ronda, 2026-11-15, posterior a la aprobación, por decisión mía a raíz de la auditoría 003 (hallazgos 1, 2, 8 y 10). La spec mantiene `Estado: Aprobada`:
 - `country` y `plan` no se recortan de espacios; solo `name` y `email` se recortan. «Exactamente» significa que `" starter "` da 422 (R1, R11, Entradas, Errores, Casos límite; nuevo CA61). Cierra el hallazgo 2.
 - `GET /customers/{id}`: el `id` solo acepta dígitos ASCII con un `-` opcional. `0`, negativos y enteros inexistentes (incluidos los mayores de 2^63-1) dan 404; `+1`, decimales y no numéricos dan 422 «Identificador de cliente no válido.» (R8, Entradas, Errores, Casos límite; nuevo CA62). Cierra el hallazgo 8.
 - Errores: se documentan los textos de ruta inexistente (404 «Recurso no encontrado.»), método no permitido (405 «Método no permitido.») y error no controlado (500 «Error interno del servidor.»), todos en `{"detail": ...}` (R13, Errores, Casos límite; nuevo CA63). Cierra el hallazgo 1 en la spec; el 500 con ese formato necesita un manejador en el backend, que aún no existe.
 - Errata: «Cuerpo de la petición no válida.» pasa a «no válido.» en Casos límite, como en R16, Errores y CA41. Cierra el hallazgo 10.
 - Las reglas y los CA anteriores no cambian. ADR 001 (versiones de `email-validator` y `dnspython`), ADR 008 (detección del 409) y la skill `convenciones-backend` (capa `repositories/`) actualizados por la misma auditoría.
 
-Revisión de Pablo: he comprobado que el cliente tiene los cinco campos que pedía (nombre, identificador fiscal, email, país y plan). El plan lo elige el cliente, no la simulación, por eso va en el cliente. Dos clientes no pueden tener el mismo identificador fiscal aunque sea de otro país, porque es el dato que identifica a la empresa.
+Mi revisión: he comprobado que el cliente tiene los cinco campos que pedía (nombre, identificador fiscal, email, país y plan). El plan lo elige el cliente, no la simulación, por eso va en el cliente. Dos clientes no pueden tener el mismo identificador fiscal aunque sea de otro país, porque es el dato que identifica a la empresa.

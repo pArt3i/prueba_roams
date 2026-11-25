@@ -33,10 +33,10 @@ Cómo trabajé: spec primero, código después. Usé un asistente de chat para p
 
 **Qué detecté y corregí.**
 - El `arquitecto` comprimió la spec 001 a 200 líneas aplicando mal mi regla (era solo para código). Se corrigió en `CLAUDE.md`.
-- Al reescribir la spec 001 borró mi nota original de «Cambios de Pablo». La hice restaurar.
+- Al reescribir la spec 001 borró mi nota original de «Mis cambios». La hice restaurar.
 - La spec 004 contradecía a las demás: seguía enviando el plan en la simulación. Se alineó.
 - Un error mío: un buscar y reemplazar de VS Code cambió también las plantillas de las skills `adr` y `spec-writer` (decían que toda spec nace «Aprobada»). Lo vi en `git diff` y lo deshice con `git checkout`.
-- La spec 001 necesitó cinco rondas de decisiones (espacios Unicode, caracteres no ASCII, búsqueda con `ß`, etc.), todas anotadas en «Cambios de Pablo».
+- La spec 001 necesitó cinco rondas de decisiones (espacios Unicode, caracteres no ASCII, búsqueda con `ß`, etc.), todas anotadas en «Mis cambios».
 
 **Commits.** `742eeec`, `5f93004`.
 

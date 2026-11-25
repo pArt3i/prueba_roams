@@ -17,9 +17,9 @@ La skill [`reglas-negocio`](../../.claude/skills/reglas-negocio/SKILL.md) define
    - Contras: contradice la skill; no hay datos de precios por plan.
 
 ## Decisión
-Decidido: opción 2 (decisión de Pablo). El plan es un atributo del cliente ([spec 001](../01-specs/001-clientes.md), R11): obligatorio y restringido a `starter`, `business` o `enterprise` (cualquier otro devuelve 422). Es informativo y nunca entra en el cálculo. Las simulaciones no tienen plan: `POST /simulations` no lo acepta (si llega, se ignora como cualquier campo desconocido) y ni su respuesta ni el historial lo devuelven.
+Decidido: opción 2 (decisión mía). El plan es un atributo del cliente ([spec 001](../01-specs/001-clientes.md), R11): obligatorio y restringido a `starter`, `business` o `enterprise` (cualquier otro devuelve 422). Es informativo y nunca entra en el cálculo. Las simulaciones no tienen plan: `POST /simulations` no lo acepta (si llega, se ignora como cualquier campo desconocido) y ni su respuesta ni el historial lo devuelven.
 
-Textos en español para la interfaz (decisión de Pablo, 2026-11-15). La API sigue usando el valor en minúsculas; el frontend lo traduce al mostrarlo:
+Textos en español para la interfaz (decisión mía, 2026-11-15). La API sigue usando el valor en minúsculas; el frontend lo traduce al mostrarlo:
 
 | Valor de la API | Texto en la interfaz |
 | --- | --- |
@@ -34,5 +34,5 @@ Textos en español para la interfaz (decisión de Pablo, 2026-11-15). La API sig
 
 ## Preguntas abiertas
 - ~~¿El plan es obligatorio en la simulación o tiene un valor por defecto?~~ Sin objeto: la simulación no tiene plan; en el cliente es obligatorio (spec 001).
-- ~~¿El plan pertenece a la simulación o al cliente?~~ Resuelta por Pablo: al cliente.
-- ~~Textos visibles en español de cada plan (`starter`, `business`, `enterprise`).~~ Resuelta por Pablo: Starter, Business y Enterprise (tabla de la Decisión).
+- ~~¿El plan pertenece a la simulación o al cliente?~~ Resuelta por mí: al cliente.
+- ~~Textos visibles en español de cada plan (`starter`, `business`, `enterprise`).~~ Resuelta por mí: Starter, Business y Enterprise (tabla de la Decisión).

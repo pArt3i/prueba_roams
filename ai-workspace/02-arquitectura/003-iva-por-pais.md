@@ -5,7 +5,7 @@ Fecha: 2026-11-15
 ## Contexto
 El precio lleva IVA según el país del cliente. La skill [`reglas-negocio`](../../.claude/skills/reglas-negocio/SKILL.md) marca el IVA como propuesta que necesita ADR, y los tipos están en [`iva.md`](../../.claude/skills/reglas-negocio/iva.md) (ES, PT, FR, DE, IT). Este ADR no repite la tabla para no duplicarla.
 
-Fuentes de los tipos, aportadas por Pablo:
+Fuentes de los tipos, aportadas por mí:
 - [Comisión Europea, tipos de IVA](https://taxation-customs.ec.europa.eu/taxation/vat/vat-directive/vat-rates_en): marco legal y acceso a la base de datos TEDB. La página no lista las cifras.
 - [Eurofiscalis, tipos de IVA en la UE](https://www.eurofiscalis.com/en/vat-rates-in-ue/): fuente secundaria que confirma ES 21 %, PT 23 %, FR 20 %, DE 19 % e IT 22 %, tipos vigentes a 28 de septiembre de 2026.
 
@@ -23,11 +23,11 @@ Fuentes de los tipos, aportadas por Pablo:
 ## Decisión
 Decidido: opción 1. Se aplica el IVA del país del cliente. El código de país se acepta sin distinguir mayúsculas: `es` se acepta y se guarda `ES`. Un país fuera de la tabla devuelve 422 (decisión ya tomada); ese 422 se aplica tras normalizar a mayúsculas, es decir, `es` es válido y `xx` no. Un país con algún carácter no ASCII (`eſ`, con `ſ` U+017F, o `ıt`, con `ı` U+0131) nunca se convierte en un código de la tabla, aunque en mayúsculas lo pareciera (`ES` e `IT`): queda fuera y da 422 «País no admitido.» (ver spec 001, R1, y spec 002, R4).
 
-Alcance de países (decisión de Pablo): la tabla se queda en ES, PT, FR, DE e IT. `AT`, `NL`, `BE` y cualquier otro país quedan fuera; ampliarla es un cambio de código y de `iva.md`.
+Alcance de países (decisión mía): la tabla se queda en ES, PT, FR, DE e IT. `AT`, `NL`, `BE` y cualquier otro país quedan fuera; ampliarla es un cambio de código y de `iva.md`.
 
-Cada simulación guarda, en el momento de calcular, el tipo de IVA aplicado y el subtotal, el IVA y el total en céntimos (decisión de Pablo). El historial no cambia aunque la tabla de tipos cambie después, y nada se recalcula al leer.
+Cada simulación guarda, en el momento de calcular, el tipo de IVA aplicado y el subtotal, el IVA y el total en céntimos (decisión mía). El historial no cambia aunque la tabla de tipos cambie después, y nada se recalcula al leer.
 
-Formato (decisión de Pablo):
+Formato (decisión mía):
 - Importes: en la API, texto con dos decimales (p. ej. `"470.00"`); internamente, céntimos enteros.
 - Tipo de IVA: texto (p. ej. `"0.21"` para el 21 %), nunca `float`; se guarda y se devuelve así. `iva.md` lo escribe en porcentaje; la conversión es solo de presentación.
 

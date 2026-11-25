@@ -41,7 +41,7 @@ Selección de los prompts que más pesaron en el proyecto, tal cual se enviaron 
 
 **Qué buscaba.** Que el `arquitecto` redactara los 8 ADR y las 4 specs antes de escribir una línea de código, con las decisiones ya tomadas por mí y todo lo demás como «Preguntas abiertas», sin inventar respuestas.
 
-**Resultado.** Salieron 8 ADR y 4 specs con muchas preguntas abiertas. Las fui cerrando en rondas, anotadas en «Cambios de Pablo» de cada spec.
+**Resultado.** Salieron 8 ADR y 4 specs con muchas preguntas abiertas. Las fui cerrando en rondas, anotadas en «Mis cambios» de cada spec.
 
 ```text
 Usa el subagente arquitecto. Lee CLAUDE.md y la skill reglas-negocio.

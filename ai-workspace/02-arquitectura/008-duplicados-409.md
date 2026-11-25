@@ -3,7 +3,7 @@ Estado: Aceptada
 Fecha: 2026-11-15
 
 ## Contexto
-No debe haber dos clientes con el mismo identificador fiscal. La skill [`validacion-nif`](../../.claude/skills/validacion-nif/SKILL.md) dice que dos clientes con el mismo identificador normalizado son duplicados. Pablo ya decidió que el duplicado devuelve 409, y `convenciones-backend` reserva 409 para duplicados.
+No debe haber dos clientes con el mismo identificador fiscal. La skill [`validacion-nif`](../../.claude/skills/validacion-nif/SKILL.md) dice que dos clientes con el mismo identificador normalizado son duplicados. Yo ya había decidido que el duplicado devuelve 409. `convenciones-backend` reserva 409 para duplicados.
 
 ## Opciones consideradas
 1. **Comprobar en el servicio antes de insertar y, además, restricción `UNIQUE` en la columna normalizada.**

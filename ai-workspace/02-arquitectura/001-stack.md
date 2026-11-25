@@ -19,13 +19,13 @@ SaaS-O-Matic es un simulador interno de suscripciones para comerciales: alta de 
 ## Decisión
 Decidido: opción 1. Es el stack ya fijado en `CLAUDE.md`, es el más simple de arrancar y no hay requisitos que justifiquen PostgreSQL. Lo que `CLAUDE.md` y las skills `convenciones-*` ya dicen (estructura de carpetas, pytest, ruff, Vitest, sin router ni Pinia, sin dependencias nuevas sin avisar) no se repite aquí.
 
-Dependencia adicional, **autorizada por Pablo**: `email-validator`, que Pydantic exige para el tipo `EmailStr` (validación del email del cliente, [spec 001](../01-specs/001-clientes.md), R10). Es la aprobación que pide `CLAUDE.md` para añadir dependencias; cualquier otra sigue necesitando aviso previo. Está instalada y fijada en `backend/requirements.txt` con la versión de la tabla, igual que `dnspython`, que es dependencia de `email-validator` y no se usa directamente.
+Dependencia adicional, **autorizada por mí**: `email-validator`, que Pydantic exige para el tipo `EmailStr` (validación del email del cliente, [spec 001](../01-specs/001-clientes.md), R10). Es la aprobación que pide `CLAUDE.md` para añadir dependencias; cualquier otra sigue necesitando aviso previo. Está instalada y fijada en `backend/requirements.txt` con la versión de la tabla, igual que `dnspython`, que es dependencia de `email-validator` y no se usa directamente.
 
-Versiones mínimas, por decisión de Pablo: las instaladas hoy, tomadas de `backend/requirements.txt` y `frontend/package.json`, salvo Python, que se fija como indica la tabla.
+Versiones mínimas, por decisión mía: las instaladas hoy, tomadas de `backend/requirements.txt` y `frontend/package.json`, salvo Python, que se fija como indica la tabla.
 
 | Pieza | Versión mínima | Fuente |
 | --- | --- | --- |
-| Python | 3.12 o superior, probado con 3.13.8 | Decisión de Pablo (no figura en `requirements.txt`) |
+| Python | 3.12 o superior, probado con 3.13.8 | Decisión mía (no figura en `requirements.txt`) |
 | FastAPI | 0.162.7 | `requirements.txt` |
 | SQLAlchemy | 2.1.8 | `requirements.txt` |
 | Pydantic | 2.14.3 | `requirements.txt` |

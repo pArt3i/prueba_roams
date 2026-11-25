@@ -148,8 +148,8 @@ Salvo que se indique otra cosa, `POST /simulations` lleva `customer_id` de un cl
 - [ ] CA36: dados importes y tipos de IVA en cualquier endpoint, cuando se serializa la respuesta, entonces ninguno es un número JSON (siempre cadena).
 - [ ] CA37: dado `country` `eſ` (`ſ` es U+017F, la s larga; en mayúsculas sería `ES`) o `ıt` (`ı` es U+0131, i sin punto; en mayúsculas sería `IT`), cuando se llama a `preview` con 10 usuarios, entonces 422 con «País no admitido.»; dado `country` `es` (ASCII), entonces 200 con `ES`.
 
-## Cambios de Pablo
-Primera ronda, 2026-11-15, por decisión de Pablo:
+## Mis cambios
+Primera ronda, 2026-11-15, por decisión mía:
 - Formatos: importes como texto con dos decimales (`"470.00"`), `vat_rate` como texto decimal (`"0.21"`), `created_at` en ISO 8601 UTC con `Z`; en base de datos, importes en céntimos enteros (R16).
 - El plan pertenece al cliente (spec 001): se quita de `POST /simulations` y de su respuesta; se elimina el campo, R6 (no se renumeran las demás), el error «Plan no válido.» y el criterio del plan `gold`; referencia al ADR 005 actualizada.
 - `storage_gb` (0 a 1 000 000) y `api_calls` (0 a 1 000 000 000) son obligatorios en `POST /simulations`, se guardan, no afectan al precio y no tienen valor por defecto; ausentes, 422 (R5).
@@ -165,16 +165,16 @@ Primera ronda, 2026-11-15, por decisión de Pablo:
 - Criterios nuevos: `users` 10000 válido y 10001 con 422; `storage_gb` y `api_calls` ausentes con 422; máximos válidos y máximos más uno con 422; `country` en minúsculas en `preview`. CA renumerados (CA1 a CA36); los de tramos e IVA remiten a la skill `reglas-negocio` en lugar de copiar sus datos.
 - Alineados con estas decisiones el ADR 002 (formato de importes y snapshot), el ADR 004 (cotas y obligatoriedad) y el ADR 005 (plan en el cliente), solo donde se contradecían.
 - Preguntas abiertas: todas cerradas; se elimina la sección.
-- Pablo confirma las cinco decisiones que tomó el arquitecto fuera de su lista:
+- Confirmo las cinco decisiones que propuso el arquitecto fuera de mi lista:
   - Mensajes nuevos de `storage_gb` y `api_calls`: «El almacenamiento debe ser un entero entre 0 y 1000000.» y «Las llamadas a la API deben ser un entero entre 0 y 1000000000.».
   - `country` ausente, vacío, `null` o de tipo incorrecto en `preview`: «El país es obligatorio.».
   - Orden de validación en `preview`: cuerpo, `users`, `country`.
   - Coerción estricta también en `customer_id`, `storage_gb` y `api_calls`, no solo en `users`.
   - Valores de los criterios CA5 (10 000 usuarios: subtotal `50170.00`) y CA33 (60 usuarios con ES: 47000, 9870 y 56870 céntimos).
 
-Segunda ronda, 2026-11-15, cambio posterior a la aprobación, a raíz de la reauditoría 002-logica-pura-reauditoria (hallazgos 1 y 2). Redactado por el arquitecto a petición de la sesión; Pablo debe confirmarlo. La spec mantiene `Estado: Aprobada`:
+Segunda ronda, 2026-11-15, cambio posterior a la aprobación, a raíz de la reauditoría 002-logica-pura-reauditoria (hallazgos 1 y 2). Redactado por el arquitecto a propuesta de la sesión de Claude Code a raíz de la reauditoría; lo confirmé yo. La spec mantiene `Estado: Aprobada`:
 - `country`: un país con algún carácter no ASCII (`eſ`, con `ſ` U+017F; `ıt`, con `ı` U+0131) nunca se convierte en un código de la tabla, aunque en mayúsculas diera `ES` o `IT`: queda fuera de la tabla y da 422 «País no admitido.». Es una regla que ya estaba implementada y no figuraba en la spec; se documenta (R4, Casos límite; nuevo CA37). Sin cambio de comportamiento. Alineados la spec 001 (R1, CA60) y el ADR 003.
 - Tipo de FR: se confirma que `vat_rate` de FR es `"0.20"` (texto con dos decimales, no `"0.2"`); se añade a los ejemplos de CA3, con los demás países (ES `"0.21"`, PT `"0.23"`, DE `"0.19"`, IT `"0.22"`). Sin cambio de comportamiento: el servicio ya devolvía `"0.20"`.
 
 
-Revisión de Pablo: cada simulación guarda el IVA y los importes del momento en que se hizo, para que el historial no cambie si luego cambia el IVA de un país. El precio lo calcula siempre el servidor y nunca se fía de lo que manda el cliente.
+Mi revisión: cada simulación guarda el IVA y los importes del momento en que se hizo, para que el historial no cambie si luego cambia el IVA de un país. El precio lo calcula siempre el servidor y nunca se fía de lo que manda el cliente.

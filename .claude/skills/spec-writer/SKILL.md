@@ -47,6 +47,6 @@ Respuesta correcta, con un ejemplo en JSON.
 ## Preguntas abiertas
 - ...
 
-## Cambios de Pablo
-(vacío al crear. Pablo anota aquí lo que corrige antes de aprobar.)
+## Mis cambios
+(vacío al crear. El autor anota aquí lo que corrige antes de aprobar.)
 ```

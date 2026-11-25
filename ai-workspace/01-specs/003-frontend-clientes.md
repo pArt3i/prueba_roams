@@ -106,8 +106,8 @@ Cada criterio indica cómo se comprueba. Los marcados «Vitest» se prueban con 
 - [ ] CA24 (auditor): dado el código de `frontend/src/`, entonces no contiene fórmulas de tramos ni de IVA; la conversión de divisa de la spec 004 es solo presentación y está permitida.
 - [ ] CA25 (Vitest): dados los composables `useCustomers` y de alta de cliente, entonces tienen tests Vitest de: los cuatro estados, la búsqueda (espera de 300 ms, recorte y codificación), el descarte de respuestas antiguas, y el alta (201, 422, 409, fallo de red y doble envío).
 
-## Cambios de Pablo
-Primera ronda, 2026-11-15, por decisión de Pablo:
+## Mis cambios
+Primera ronda, 2026-11-15, por decisión mía:
 - Dashboard: buscador, contador de clientes («N clientes», «1 cliente»; cuenta los resultados mostrados), tarjetas de cliente y botón «Nuevo cliente»; sin métricas ni simulaciones recientes (Salidas, Contexto y alcance). Pregunta cerrada.
 - Tarjeta: muestra nombre, país, identificador fiscal, email y plan, los cinco campos que devuelve `GET /customers` según la spec 001; el plan se ve como «Starter», «Business» o «Enterprise»; ejemplo JSON actualizado con los cinco campos y el `id` (Salidas, CA12). Pregunta cerrada.
 - Navegación sin router: pulsar una tarjeta (accesible con teclado) cambia a la vista de detalle del cliente (spec 004), que tiene un botón «Volver a clientes»; la lista se recarga al volver (R5, CA13, CA14). Pregunta cerrada.
@@ -118,9 +118,9 @@ Primera ronda, 2026-11-15, por decisión de Pablo:
 - ADR 005 y skill `convenciones-frontend`: el ADR 005 recoge los textos en español de los planes (pregunta cerrada); la skill añade que las respuestas antiguas también se descartan en el buscador.
 - Confirmo los supuestos del arquitecto: al volver se recarga la lista sin búsqueda, botón Cancelar en el alta, selectores que empiezan vacíos, texto de ayuda en el plan, errores raros con el mismo mensaje que la red, «Cliente creado.» sin desaparecer y contador solo con datos.
 
-Segunda ronda, 2026-11-15, por decisión de Pablo:
+Segunda ronda, 2026-11-15, por decisión mía:
 - R14 y CA24: pasan a decir «sin fórmulas de tramos ni IVA; la conversión de divisa de la spec 004 es solo presentación y está permitida». Se ajusta también el alcance («No entra») en el mismo sentido.
 - Botón «Volver a clientes»: pertenece a la vista de detalle (spec 004). Se quita de las Entradas de esta spec y deja de ser un elemento propio; R5 solo menciona que el detalle ofrece la acción de volver. Se conservan los criterios de «pulsar una tarjeta abre el detalle» (CA13) y «al volver, la lista se recarga con la búsqueda vacía» (CA14, reescrito sin citar el botón como elemento de esta spec). No hace falta renumerar: siguen CA1 a CA25.
 
 
-Revisión de Pablo: el alta de clientes va en un panel de la misma pantalla y no en una página aparte, para que el comercial no pierda el listado.
+Mi revisión: el alta de clientes va en un panel de la misma pantalla y no en una página aparte, para que el comercial no pierda el listado.

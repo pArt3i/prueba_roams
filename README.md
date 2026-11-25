@@ -137,7 +137,7 @@ La fuente única es la skill [`reglas-negocio`](.claude/skills/reglas-negocio/SK
 
 El proyecto se ha desarrollado con Claude Code siguiendo un flujo **spec → implementación → auditoría**:
 
-1. El arquitecto redacta una spec en `ai-workspace/01-specs/`, que Pablo aprueba antes de escribir código.
+1. El arquitecto redacta una spec en `ai-workspace/01-specs/`, que yo apruebo antes de escribir código.
 2. Los agentes `backend-dev` y `frontend-dev` implementan, y `qa-tester` escribe y ejecuta los tests.
 3. El `auditor`, independiente de quien implementó, compara el código con la spec; su informe se guarda en `ai-workspace/03-proceso/auditorias/`.
 
