@@ -163,3 +163,21 @@ Lo que sé que no está resuelto:
 - Sin autenticación.
 - Sin paginación en la lista de clientes ni en el historial.
 - SQLite: pensado para un equipo pequeño; con varios escritores concurrentes habría que pasar a otra base de datos ([ADR 001](ai-workspace/02-arquitectura/001-stack.md)).
+
+## Capturas
+
+Buscador y lista de clientes:
+
+![Buscador y lista de clientes](docs/img/app-01-buscador.png)
+
+Detalle del cliente con el simulador, en USD:
+
+![Simulador con tramos e IVA, convertido a USD](docs/img/app-02-simulador.png)
+
+Historial de simulaciones guardadas:
+
+![Historial de simulaciones](docs/img/app-03-historial.png)
+
+En móvil:
+
+![Detalle del cliente en móvil](docs/img/app-04-movil.png)
